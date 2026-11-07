@@ -16,3 +16,8 @@ from app.billing.models import (  # noqa: F401
     movimiento_saldo_model,
     suscripcion_model,
 )
+from app.contacts.models import (  # noqa: F401
+    contacto_model,
+    contacto_rechazado_model,
+    importacion_contacto_model,
+)
