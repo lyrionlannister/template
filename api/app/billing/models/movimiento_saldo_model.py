@@ -1,8 +1,8 @@
 """Movimiento de saldo utilizable del tenant. Esta fase solo genera
 movimientos de `recarga`; `consumo` y `ajuste` llegan en fases posteriores
-(mensajería/campañas y correcciones manuales auditadas, ver `/CLAUDE.md`
-"Saldo utilizable"). `referencia` es la clave de idempotencia propia que se
-manda a la pasarela antes de intentar el cobro (ver `money-precision`)."""
+(mensajería/campañas y correcciones manuales auditadas). `referencia` es la
+clave de idempotencia propia que se manda a la pasarela antes de intentar
+el cobro (ver `money-precision`)."""
 
 from sqlalchemy import Enum, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column

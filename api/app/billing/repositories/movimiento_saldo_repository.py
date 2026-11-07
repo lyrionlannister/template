@@ -40,8 +40,8 @@ class MovimientoSaldoRepository(TenantScopedRepository[MovimientoSaldo]):
 
     async def calcular_saldo_disponible(self) -> Decimal:
         """Suma de recargas aprobadas. Sin `consumo` todavía (llega en la
-        fase de mensajería, ver `/CLAUDE.md` "Saldo utilizable"), así que por
-        ahora el saldo es exactamente eso: lo recargado y confirmado."""
+        fase de mensajería), así que por ahora el saldo es exactamente eso:
+        lo recargado y confirmado."""
 
         query = (
             self.scoped()

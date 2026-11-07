@@ -1,4 +1,4 @@
-"""Recarga de saldo utilizable (SMS/RCS, ver `/CLAUDE.md` "Saldo utilizable").
+"""Recarga de saldo utilizable (SMS/RCS).
 Tres medios, siempre pagos sueltos -- nunca recurrentes (confirmado contra la
 doc real de Wompi: PSE exige redirección y Nequi aprobación por notificación
 push en cada cobro, ninguno sirve para suscripción): tarjeta (tokeniza una

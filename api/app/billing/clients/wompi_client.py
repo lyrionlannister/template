@@ -1,5 +1,5 @@
-"""Cliente de la pasarela de pago (hoy, únicamente Wompi -- ver `/CLAUDE.md`
-"Billing: solo Wompi"). Es el único archivo del dominio que sabe que el
+"""Cliente de la pasarela de pago (hoy, únicamente Wompi). Es el único
+archivo del dominio que sabe que el
 proveedor concreto es Wompi; el resto de `billing` habla en términos
 genéricos de pasarela (ver `EventoPagoProcesado`, `FuenteDePago`).
 
