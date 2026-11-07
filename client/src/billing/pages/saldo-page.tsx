@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FC, type FormEvent } from "react";
-import { Landmark, Settings, Smartphone, Wallet } from "lucide-react";
+import { CreditCard, Landmark, Settings, Smartphone, Wallet } from "lucide-react";
 import { useAuth } from "../../auth/hooks/use-auth";
 import type { Usuario } from "../../auth/types/usuario";
 import { formatCop } from "../../shared/utils/format-cop";
@@ -15,6 +15,8 @@ import { Spinner } from "../../ui/components/spinner";
 import { Table } from "../../ui/components/table";
 import { TableCell } from "../../ui/components/table-cell";
 import { TableHeadCell } from "../../ui/components/table-head-cell";
+import { TarjetaVisual } from "../../ui/components/tarjeta-visual";
+import { detectarMarcaTarjeta } from "../../shared/utils/detectar-marca-tarjeta";
 import { useBilling } from "../hooks/use-billing";
 import { useWompiTokenizacion } from "../hooks/use-wompi-tokenizacion";
 import type { TokensDeAceptacion } from "../types/fuente-de-pago";
@@ -209,17 +211,8 @@ export const SaldoPage: FC = () => {
           {errorCarga}
         </Alert>
       ) : (
-        <div className="flex flex-col gap-5 max-w-xl">
-          <div className="bg-surface border border-border rounded-md p-4.75">
-            <h3 className="text-[15px] font-semibold mb-1 flex items-center gap-2">
-              <Wallet className="size-4.5 text-brand" aria-hidden />
-              Saldo disponible
-            </h3>
-            <div className="text-2xl font-semibold mt-2">
-              {saldo ? formatCop(saldo.saldoCop) : "--"}
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-5 items-start">
+          <div className="flex flex-col gap-5 min-w-0 lg:order-1">
           <div className="bg-surface border border-border rounded-md p-4.75">
             <h3 className="text-[15px] font-semibold mb-3.5">Recargar saldo</h3>
 
@@ -246,6 +239,16 @@ export const SaldoPage: FC = () => {
 
               {medio === "tarjeta" && (
                 <>
+                  <div className="mb-4.5">
+                    <TarjetaVisual
+                      marca={detectarMarcaTarjeta(numero)}
+                      numero={numero}
+                      titular={titular}
+                      mesExpiracion={mesExpiracion}
+                      anioExpiracion={anioExpiracion}
+                    />
+                  </div>
+
                   <Field label="Número de tarjeta" htmlFor="recarga-card-number">
                     <Input
                       id="recarga-card-number"
@@ -471,6 +474,65 @@ export const SaldoPage: FC = () => {
               </div>
             </div>
           )}
+          </div>
+
+          <div className="flex flex-col gap-5 lg:order-2">
+            <div className="bg-ok-soft border border-[color-mix(in_srgb,var(--color-ok)_16%,transparent)] rounded-md p-4.75">
+              <h3 className="text-xs font-semibold tracking-wide uppercase text-ok-ink flex items-center gap-1.5 mb-2">
+                <Wallet className="size-4" aria-hidden />
+                Saldo SMS / RCS
+              </h3>
+              <div className="text-[28px] font-semibold leading-none">
+                {saldo ? formatCop(saldo.saldoCop) : "--"}{" "}
+                <span className="text-sm font-normal text-ink-2">COP</span>
+              </div>
+              <p className="text-ink-2 text-sm mt-2.5">
+                Solo paga envíos SMS y RCS que excedan tus incluidos. No paga WhatsApp ni tu
+                suscripción.
+              </p>
+            </div>
+
+            <div className="bg-surface border border-border rounded-md p-4.75">
+              <h3 className="text-[15px] font-semibold mb-3.5">Formas de recargar saldo</h3>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-start gap-2.5">
+                  <CreditCard className="size-4.5 text-brand flex-none mt-0.5" aria-hidden />
+                  <div>
+                    <div className="font-semibold text-sm">Tarjeta</div>
+                    <p className="text-ink-3 text-xs">Pago único en el widget de Wompi. No queda guardada.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <Landmark className="size-4.5 text-brand flex-none mt-0.5" aria-hidden />
+                  <div>
+                    <div className="font-semibold text-sm">PSE</div>
+                    <p className="text-ink-3 text-xs">Te lleva a la página de tu banco para autenticarte.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <Smartphone className="size-4.5 text-brand flex-none mt-0.5" aria-hidden />
+                  <div>
+                    <div className="font-semibold text-sm">Nequi</div>
+                    <p className="text-ink-3 text-xs">Aceptas el cobro con una notificación en tu app.</p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-ink-3 text-xs mt-4.5 pt-4.5 border-t border-border">
+                Ninguno de los tres sirve para cobro recurrente: eso solo lo hace la tarjeta
+                tokenizada de tu suscripción, en{" "}
+                <a href="/suscripcion" className="text-brand underline">
+                  Suscripción
+                </a>
+                .
+              </p>
+            </div>
+
+            <Alert variant="ok" title="Pulso no guarda tus datos de pago">
+              El número de tarjeta se cifra en tu navegador y viaja directo a Wompi. PSE y Nequi
+              se gestionan en la plataforma de tu banco o de tu app: Pulso solo guarda el estado
+              y el monto del movimiento.
+            </Alert>
+          </div>
         </div>
       )}
     </AppShell>

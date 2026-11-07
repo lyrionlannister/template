@@ -11,6 +11,8 @@ import { Field } from "../../ui/components/field";
 import { Input } from "../../ui/components/input";
 import { Pill } from "../../ui/components/pill";
 import { Spinner } from "../../ui/components/spinner";
+import { TarjetaVisual } from "../../ui/components/tarjeta-visual";
+import { detectarMarcaTarjeta } from "../../shared/utils/detectar-marca-tarjeta";
 import { useBilling } from "../hooks/use-billing";
 import { useWompiTokenizacion } from "../hooks/use-wompi-tokenizacion";
 import type { TokensDeAceptacion } from "../types/fuente-de-pago";
@@ -203,25 +205,14 @@ export const SuscripcionPage: FC = () => {
                 marca, los últimos 4 dígitos y el vencimiento — nunca el número completo ni el CVC.
               </p>
 
-              <div
-                className="rounded-xl p-5 text-white mb-4.5 bg-gradient-to-br from-brand to-brand-active"
-                aria-label={`Tarjeta ${suscripcion.tarjeta.marca ?? ""} terminada en ${suscripcion.tarjeta.ultimosCuatro ?? "----"}`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs tracking-wide opacity-80">PULSO</span>
-                  <span className="text-sm font-semibold uppercase">
-                    {suscripcion.tarjeta.marca ?? "Tarjeta"}
-                  </span>
-                </div>
-                <div className="text-xl tracking-[0.2em] mt-6 mb-4">
-                  •••• •••• •••• {suscripcion.tarjeta.ultimosCuatro ?? "----"}
-                </div>
-                <div className="flex items-end justify-between text-xs">
-                  <span className="uppercase">{suscripcion.tarjeta.titular ?? "—"}</span>
-                  <span>
-                    {suscripcion.tarjeta.mesExpiracion ?? "--"}/{suscripcion.tarjeta.anioExpiracion ?? "--"}
-                  </span>
-                </div>
+              <div className="mb-4.5">
+                <TarjetaVisual
+                  marca={suscripcion.tarjeta.marca}
+                  ultimosCuatro={suscripcion.tarjeta.ultimosCuatro ?? undefined}
+                  titular={suscripcion.tarjeta.titular ?? undefined}
+                  mesExpiracion={suscripcion.tarjeta.mesExpiracion ?? undefined}
+                  anioExpiracion={suscripcion.tarjeta.anioExpiracion ?? undefined}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-x-4 gap-y-4 mb-4.5">
@@ -302,6 +293,16 @@ export const SuscripcionPage: FC = () => {
             </div>
           ) : (
             <form onSubmit={conectar}>
+              <div className="mb-4.5">
+                <TarjetaVisual
+                  marca={detectarMarcaTarjeta(numero)}
+                  numero={numero}
+                  titular={titular}
+                  mesExpiracion={mesExpiracion}
+                  anioExpiracion={anioExpiracion}
+                />
+              </div>
+
               <Field label="Número de tarjeta" htmlFor="sub-card-number">
                 <Input
                   id="sub-card-number"
