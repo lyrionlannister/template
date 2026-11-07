@@ -6,19 +6,32 @@ a través de `AuthService` (nunca tocando `auth.models` directo -- ver
 `.importlinter`). La recarga de saldo (`MovimientoSaldo`) y la suscripción
 recurrente llegan en tareas posteriores y se conectan aquí mismo."""
 
+from datetime import date, timedelta
 from typing import Any
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.app_platform.services.parametro_comercial_service import (
+    ParametroComercialService,
+)
 from app.auth.services.auth_service import AuthService
 from app.billing.clients.wompi_client import PASARELA, verificar_checksum_evento
-from app.billing.enums.billing_enums import ConceptoCobro, EstadoTransaccionPago
+from app.billing.enums.billing_enums import (
+    ConceptoCobro,
+    EstadoSuscripcion,
+    EstadoTransaccionPago,
+)
 from app.billing.exceptions import ChecksumInvalidoError
 from app.billing.models.evento_pago_procesado_model import EventoPagoProcesado
 from app.billing.repositories.cobro_repository import CobroRepository
 from app.billing.repositories.evento_pago_repository import EventoPagoRepository
+from app.billing.repositories.suscripcion_repository import SuscripcionRepository
+from app.billing.services.suscripcion_service import un_mes_despues
 from app.core.database.tenant_context import set_current_tenant
+
+_CLAVE_IMPAGO_REINTENTOS_MAX = "impago_reintentos_max"
+_CLAVE_IMPAGO_DIAS_ENTRE_REINTENTOS = "impago_dias_entre_reintentos"
 
 _ESTADO_WOMPI_A_PROPIO = {
     "APPROVED": EstadoTransaccionPago.aprobada,
@@ -44,11 +57,18 @@ def _id_evento_externo(payload: dict[str, Any]) -> str:
 
 
 class EventoPagoService:
-    def __init__(self, session: AsyncSession, auth_service: AuthService):
+    def __init__(
+        self,
+        session: AsyncSession,
+        auth_service: AuthService,
+        parametro_comercial_service: ParametroComercialService,
+    ):
         self.session = session
         self.repository = EventoPagoRepository(session)
         self.cobro_repository = CobroRepository(session)
+        self.suscripcion_repository = SuscripcionRepository(session)
         self.auth_service = auth_service
+        self.parametro_comercial_service = parametro_comercial_service
 
     async def procesar_webhook(
         self, payload: dict[str, Any]
@@ -107,3 +127,52 @@ class EventoPagoService:
                 and nuevo_estado == EstadoTransaccionPago.aprobada
             ):
                 await self.auth_service.marcar_onboarding_pagado(cobro.tenant_id)
+
+            if cobro.concepto == ConceptoCobro.suscripcion:
+                await self._reconciliar_suscripcion(cobro, nuevo_estado)
+
+    async def _reconciliar_suscripcion(
+        self, cobro, nuevo_estado: EstadoTransaccionPago
+    ) -> None:
+        """Ciclo de impago (fase 5, billing): aprobado reinicia los
+        reintentos y agenda el próximo cobro; rechazado/error cuenta un
+        intento y, si se agotan los permitidos (`impago_reintentos_max`,
+        espaciados `impago_dias_entre_reintentos`), suspende el tenant."""
+
+        suscripcion = await self.suscripcion_repository.obtener_activa_del_tenant()
+        if suscripcion is None:
+            return
+
+        hoy = date.today()
+        if nuevo_estado == EstadoTransaccionPago.aprobada:
+            suscripcion.intentos_fallidos_consecutivos = 0
+            suscripcion.estado = EstadoSuscripcion.activa
+            suscripcion.ultima_referencia_transaccion = cobro.referencia
+            suscripcion.proxima_fecha_cobro = un_mes_despues(hoy)
+            await self.suscripcion_repository.update(suscripcion)
+            await self.session.commit()
+            return
+
+        reintentos_max = await self.parametro_comercial_service.valor_vigente(
+            _CLAVE_IMPAGO_REINTENTOS_MAX, hoy
+        )
+        dias_entre_reintentos = await self.parametro_comercial_service.valor_vigente(
+            _CLAVE_IMPAGO_DIAS_ENTRE_REINTENTOS, hoy
+        )
+        suscripcion.intentos_fallidos_consecutivos += 1
+
+        if reintentos_max is not None and (
+            suscripcion.intentos_fallidos_consecutivos > int(reintentos_max)
+        ):
+            suscripcion.estado = EstadoSuscripcion.suspendida
+            await self.suscripcion_repository.update(suscripcion)
+            await self.session.commit()
+            await self.auth_service.suspender_tenant(cobro.tenant_id)
+            return
+
+        suscripcion.estado = EstadoSuscripcion.en_reintento
+        suscripcion.proxima_fecha_cobro = hoy + timedelta(
+            days=int(dias_entre_reintentos) if dias_entre_reintentos is not None else 2
+        )
+        await self.suscripcion_repository.update(suscripcion)
+        await self.session.commit()

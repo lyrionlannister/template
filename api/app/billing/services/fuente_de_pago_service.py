@@ -6,6 +6,7 @@ polling de `consultar_estado` hasta `disponible`/`fallida`, renderizando el
 iframe que Wompi exige en cada paso (`BROWSER_INFO` oculto,
 `CHALLENGE` visible -- ver `client/src/billing/`)."""
 
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +19,7 @@ from app.billing.clients.wompi_client import PASARELA, WompiClient
 from app.billing.enums.billing_enums import EstadoFuenteDePago, TipoFuenteDePago
 from app.billing.models.fuente_de_pago_model import FuenteDePago
 from app.billing.repositories.fuente_de_pago_repository import FuenteDePagoRepository
+from app.billing.services.suscripcion_service import SuscripcionService
 
 _ESTADO_WOMPI_A_PROPIO = {
     "AVAILABLE": EstadoFuenteDePago.disponible,
@@ -37,12 +39,14 @@ class FuenteDePagoService:
         wompi_client: WompiClient,
         auth_service: AuthService,
         plan_service: PlanService,
+        suscripcion_service: SuscripcionService,
     ):
         self.session = session
         self.repository = FuenteDePagoRepository(session)
         self.wompi_client = wompi_client
         self.auth_service = auth_service
         self.plan_service = plan_service
+        self.suscripcion_service = suscripcion_service
 
     async def _monto_mensual_del_tenant(self, tenant_id: int) -> int:
         """Nunca se confía en un monto que mande el cliente (ver checklist de
@@ -130,6 +134,13 @@ class FuenteDePagoService:
             fuente.estado = nuevo_estado
             await self.repository.update(fuente)
             await self.session.commit()
+
+            if nuevo_estado == EstadoFuenteDePago.disponible and fuente.es_recurrente:
+                monto_cop = await self._monto_mensual_del_tenant(sesion.tenant_id)
+                await self.suscripcion_service.activar_si_no_existe(
+                    sesion.tenant_id, fuente.id, Decimal(monto_cop)
+                )
+
             return {
                 "estado": fuente.estado.value,
                 "pasoActual": None,

@@ -79,6 +79,7 @@ async def _registrar_y_verificar_mfa(cliente: AsyncClient, email: str, capsys) -
 
 async def _limpiar(email: str, usuario_id: int | None) -> None:
     from app.billing.models.fuente_de_pago_model import FuenteDePago
+    from app.billing.models.suscripcion_model import Suscripcion
 
     async with async_session_factory() as session:
         if usuario_id is not None:
@@ -92,6 +93,9 @@ async def _limpiar(email: str, usuario_id: int | None) -> None:
             )
             tenant_id = resultado.scalar_one_or_none()
             if tenant_id is not None:
+                await session.execute(
+                    delete(Suscripcion).where(Suscripcion.tenant_id == tenant_id)
+                )
                 await session.execute(
                     delete(FuenteDePago).where(FuenteDePago.tenant_id == tenant_id)
                 )
