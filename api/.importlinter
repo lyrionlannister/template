@@ -1,0 +1,62 @@
+[importlinter]
+root_package = app
+
+[importlinter:contract:auth-layers]
+name = Capas de auth
+type = layers
+layers =
+    app.auth.controllers
+    app.auth.services
+    app.auth.repositories
+    app.auth.models
+
+[importlinter:contract:contacts-layers]
+name = Capas de contacts
+type = layers
+layers =
+    app.contacts.controllers
+    app.contacts.services
+    app.contacts.repositories
+    app.contacts.models
+
+[importlinter:contract:messaging-layers]
+name = Capas de messaging
+type = layers
+layers =
+    app.messaging.controllers
+    app.messaging.services
+    app.messaging.repositories
+    app.messaging.models
+
+[importlinter:contract:auth-no-cross-domain]
+name = auth no importa repositories/models de otros dominios
+type = forbidden
+source_modules =
+    app.auth
+forbidden_modules =
+    app.contacts.repositories
+    app.contacts.models
+    app.messaging.repositories
+    app.messaging.models
+
+[importlinter:contract:contacts-no-cross-domain]
+name = contacts no importa repositories/models de otros dominios
+type = forbidden
+source_modules =
+    app.contacts
+forbidden_modules =
+    app.auth.repositories
+    app.auth.models
+    app.messaging.repositories
+    app.messaging.models
+
+[importlinter:contract:messaging-no-cross-domain]
+name = messaging no importa repositories/models de otros dominios
+type = forbidden
+source_modules =
+    app.messaging
+forbidden_modules =
+    app.auth.repositories
+    app.auth.models
+    app.contacts.repositories
+    app.contacts.models

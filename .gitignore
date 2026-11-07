@@ -1,0 +1,17 @@
+.claude/
+
+
+CLAUDE.md
+.venv
+.env
+__pycache__/
+.mcp.json
+resources/
+prompts/
+
+*.rdb
+
+node_modules/
+dist/
+
+component-gallery-page.tsx

@@ -1,0 +1,333 @@
+@import "tailwindcss";
+
+/* El tema se controla por html[data-theme="dark"] (ver abajo), no por prefers-color-scheme:
+   este variant hace que las utilidades dark: de Tailwind sigan esa misma fuente. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+  Tema Pulse. Fuente: resources/template-design-system.html (no versionado, ver
+  .claude/skills/responsive-mobile-first/SKILL.md). Estas variables son la única
+  fuente de color/forma/motion: ningún componente fija un hex o un px de radio suelto.
+*/
+@theme {
+  /* Breakpoints Pulse — ver .claude/skills/responsive-mobile-first/SKILL.md:
+     mobile <640 (base) · tablet sm 640-1023 · laptop lg 1024-1439 · desktop 2xl >=1440.
+     2xl de Tailwind es 1536px por defecto: se sobreescribe a 1440px, el resto queda igual. */
+  --breakpoint-2xl: 1440px;
+
+  /* Superficies */
+  --color-bg: #F1F0F5;
+  --color-surface: #FDFDFF;
+  --color-surface-2: #F4F3F8;
+  --color-surface-3: #E9E7F0;
+  --color-border: #E5E3EE;
+  --color-border-strong: #D3CFDF;
+  --color-ink: #262431;
+  --color-ink-2: #5E5C6E;
+  --color-ink-3: #9693A6;
+
+  /* Marca */
+  --color-brand: #6A5AEF;
+  --color-brand-hover: #5948E0;
+  --color-brand-active: #4E3EDB;
+  --color-brand-soft: #EFEEFD;
+  --color-brand-ink: #4A3DC4;
+
+  /* Acento */
+  --color-accent: #0FBA8C;
+  --color-accent-bright: #25C99E;
+  --color-accent-soft: #E2F7EE;
+  --color-accent-ink: #0A7A5C;
+
+  /* Barra lateral — siempre oscura, no cambia con el tema claro/oscuro */
+  --color-sidebar: #232032;
+  --color-sidebar-2: #2C2A42;
+  --color-sidebar-ink: #ECEAF4;
+  --color-sidebar-muted: #9C99B0;
+  --color-sidebar-line: rgba(255, 255, 255, 0.07);
+
+  /* Canales */
+  --color-wa: #2EB872;
+  --color-wa-soft: #E6F7ED;
+  --color-wa-ink: #187A44;
+  --color-sms: #7072E8;
+  --color-sms-soft: #EEEFFC;
+  --color-sms-ink: #4A4CC0;
+  --color-rcs: #38A8E0;
+  --color-rcs-soft: #E6F4FC;
+  --color-rcs-ink: #14719E;
+
+  /* Estado */
+  --color-ok: #2EB872;
+  --color-ok-soft: #E6F7ED;
+  --color-ok-ink: #187A44;
+  --color-warn: #C77F0A;
+  --color-warn-bright: #E8930C;
+  --color-warn-soft: #FBF2DC;
+  --color-warn-ink: #8F5E0B;
+  --color-err: #E85D5D;
+  --color-err-soft: #FCEDED;
+  --color-err-ink: #BC3B3B;
+  --color-info: #5B8DEF;
+  --color-info-soft: #EAF1FD;
+  --color-info-ink: #2F5FC0;
+
+  /* Tipografía */
+  --font-display: "Space Grotesk", sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Forma */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
+
+  /* Sombra — tinte violeta-gris en claro, negro en oscuro (ver override abajo) */
+  --shadow-sm: 0 1px 2px rgba(58, 50, 110, 0.04), 0 6px 16px -6px rgba(58, 50, 110, 0.07);
+  --shadow-md: 0 2px 4px rgba(58, 50, 110, 0.04), 0 16px 36px -12px rgba(58, 50, 110, 0.13);
+  --shadow-lg: 0 4px 8px rgba(58, 50, 110, 0.05), 0 32px 64px -20px rgba(58, 50, 110, 0.22);
+
+  /* Motion — duración */
+  --duration-instant: 80ms;
+  --duration-fast: 140ms;
+  --duration-base: 220ms;
+  --duration-slow: 340ms;
+  --duration-slower: 520ms;
+
+  /* Motion — easing (sobreescribe el default de Tailwind para ease-out/in-out/in) */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --ease-spring: cubic-bezier(0.34, 1.45, 0.64, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:root {
+  color-scheme: light;
+  --scroll-thumb: #D8D5E2;
+  --scroll-thumb-hover: #B4AEC6;
+  --scroll-thumb-side: rgba(255, 255, 255, 0.16);
+  --scroll-thumb-side-hover: rgba(255, 255, 255, 0.32);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #16151F;
+  --color-surface: #201E2C;
+  --color-surface-2: #272535;
+  --color-surface-3: #302E42;
+  --color-border: #2E2C40;
+  --color-border-strong: #423F59;
+  --color-ink: #EEECF5;
+  --color-ink-2: #ABA8BE;
+  --color-ink-3: #7D7A92;
+  --color-brand: #8B7FF2;
+  --color-brand-hover: #9E92F5;
+  --color-brand-active: #6A5AEF;
+  --color-brand-soft: #2A2547;
+  --color-brand-ink: #C6BFFF;
+  --color-accent: #25C99E;
+  --color-accent-bright: #25C99E;
+  --color-accent-soft: #123129;
+  --color-accent-ink: #5FD3B3;
+  --color-wa-soft: #14301F;
+  --color-wa-ink: #7BDCA4;
+  --color-sms-soft: #282847;
+  --color-sms-ink: #ACADFF;
+  --color-rcs-soft: #14303F;
+  --color-rcs-ink: #74C6F2;
+  --color-ok-soft: #14301F;
+  --color-ok-ink: #7BDCA4;
+  --color-warn-soft: #38300F;
+  --color-warn-ink: #F2C14E;
+  --color-err-soft: #3B1D20;
+  --color-err-ink: #F2A3A3;
+  --color-info-soft: #1D2C4A;
+  --color-info-ink: #9DBEF7;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28), 0 6px 16px -6px rgba(0, 0, 0, 0.32);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.3), 0 16px 36px -12px rgba(0, 0, 0, 0.42);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.32), 0 32px 64px -20px rgba(0, 0, 0, 0.55);
+  --scroll-thumb: #37354D;
+  --scroll-thumb-hover: #504D6E;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) {
+    color-scheme: dark;
+    --color-bg: #16151F;
+    --color-surface: #201E2C;
+    --color-surface-2: #272535;
+    --color-surface-3: #302E42;
+    --color-border: #2E2C40;
+    --color-border-strong: #423F59;
+    --color-ink: #EEECF5;
+    --color-ink-2: #ABA8BE;
+    --color-ink-3: #7D7A92;
+    --color-brand: #8B7FF2;
+    --color-brand-hover: #9E92F5;
+    --color-brand-active: #6A5AEF;
+    --color-brand-soft: #2A2547;
+    --color-brand-ink: #C6BFFF;
+    --color-accent: #25C99E;
+    --color-accent-bright: #25C99E;
+    --color-accent-soft: #123129;
+    --color-accent-ink: #5FD3B3;
+    --color-wa-soft: #14301F;
+    --color-wa-ink: #7BDCA4;
+    --color-sms-soft: #282847;
+    --color-sms-ink: #ACADFF;
+    --color-rcs-soft: #14303F;
+    --color-rcs-ink: #74C6F2;
+    --color-ok-soft: #14301F;
+    --color-ok-ink: #7BDCA4;
+    --color-warn-soft: #38300F;
+    --color-warn-ink: #F2C14E;
+    --color-err-soft: #3B1D20;
+    --color-err-ink: #F2A3A3;
+    --color-info-soft: #1D2C4A;
+    --color-info-ink: #9DBEF7;
+    --scroll-thumb: #37354D;
+    --scroll-thumb-hover: #504D6E;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* Scrollbars Pulse */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scroll-thumb);
+  border-radius: 99px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scroll-thumb-hover);
+}
+*::-webkit-scrollbar-thumb:active {
+  background-color: var(--color-brand);
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Shimmer del Skeleton (ui/components/skeleton.tsx) */
+@keyframes shim {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Entrada del Modal (ui/components/modal.tsx) */
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+}
+
+/* Entrada del Toast (ui/components/toast.tsx) */
+@keyframes toastIn {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Tooltip (ui/components/tooltip.tsx) — atributo data-tip, no expresable con utilidades Tailwind */
+.has-tip {
+  position: relative;
+}
+.has-tip::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 9px);
+  transform: translateX(-50%) translateY(4px);
+  background: var(--color-sidebar);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  padding: 7px 10px;
+  border-radius: 9px;
+  width: max-content;
+  max-width: 220px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+  z-index: 40;
+  box-shadow: var(--shadow-md);
+}
+.has-tip::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 4px);
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--color-sidebar);
+  border-bottom: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease-out);
+  z-index: 40;
+}
+.has-tip:hover::after,
+.has-tip:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.has-tip:hover::before,
+.has-tip:focus-visible::before {
+  opacity: 1;
+}
+.has-tip[data-tip-pos="bottom"]::after {
+  bottom: auto;
+  top: calc(100% + 9px);
+  transform: translateX(-50%) translateY(-4px);
+}
+.has-tip[data-tip-pos="bottom"]:hover::after,
+.has-tip[data-tip-pos="bottom"]:focus-visible::after {
+  transform: translateX(-50%) translateY(0);
+}
+.has-tip[data-tip-pos="bottom"]::before {
+  bottom: auto;
+  top: calc(100% + 4px);
+  border-top: none;
+  border-bottom-color: var(--color-sidebar);
+}

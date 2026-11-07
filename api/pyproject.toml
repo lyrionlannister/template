@@ -1,0 +1,23 @@
+[project]
+name = "api-pulso"
+version = "0.1.0"
+description = "Api para envio de comunicaciones masivas"
+authors = [
+    { name = "Luis Guzmán", email = "111367000+lyrionlannister@users.noreply.github.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard]>=0.162.0",
+    "python-dotenv>=1.2.4",
+    "sqlalchemy[postgresql-asyncpg]>=2.1.8",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "black>=26.10.1",
+    "import-linter>=2.16",
+]
