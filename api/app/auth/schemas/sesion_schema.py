@@ -1,5 +1,5 @@
 """Forma de la sesión de usuario en Valkey y las claves derivadas de su
-ciclo de vida. No es una tabla (`/CLAUDE.md`, «Auth»)."""
+ciclo de vida. No es una tabla."""
 
 from app.auth.enums.auth_enums import RolUsuario
 from app.core.schemas.base_schema import BaseSchema

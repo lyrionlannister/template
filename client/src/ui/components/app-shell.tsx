@@ -25,7 +25,7 @@ export const AppShell: FC<AppShellProps> = ({ navItems, activeHref, logoLabel, u
           rail ? "lg:w-19" : "lg:w-63", // laptop/desktop: completo por defecto, colapsable a mano
         )}
       >
-        {/* h-16 (64px): debe coincidir siempre con el header de abajo, ver client/CLAUDE.md "Altura única de cabecera" */}
+        {/* h-16 (64px): debe coincidir siempre con el header de abajo (altura única de cabecera) */}
         <div className="h-16 min-h-16 box-border flex items-center gap-2.75 border-b border-sidebar-line px-4.5 md:px-0 md:justify-center lg:px-4.5 lg:justify-start">
           <div className="w-10 h-10 rounded-xl bg-brand flex-none grid place-items-center">
             <span className="text-white font-bold text-sm">P</span>

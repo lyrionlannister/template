@@ -1,8 +1,8 @@
 """Cableado de inyección de auth: token de cookie, sesión, servicios.
 
 `get_sesion_actual` es la dependencia central que entrega la sesión vigente
-a los controladores (`/CLAUDE.md`, «Auth», tarea 1): carga la sesión desde
-Valkey y, mientras dura la petición, fija el contexto de tenant
+a los controladores: carga la sesión desde Valkey y, mientras dura la
+petición, fija el contexto de tenant
 (`set_current_tenant`) para que `TenantScopedRepository` filtre solo. Un
 access token válido sin sesión en Valkey no sirve, aunque no haya expirado.
 """

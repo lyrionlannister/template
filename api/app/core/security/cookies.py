@@ -1,5 +1,5 @@
 """Set/clear de las cookies httpOnly de sesión. Los tokens nunca viajan en el
-cuerpo JSON (`/CLAUDE.md`, «Auth»): solo en estas cookies."""
+cuerpo JSON: solo en estas cookies."""
 
 from fastapi import Response
 

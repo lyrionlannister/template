@@ -1,8 +1,8 @@
 """Emisión y verificación de JWT de acceso/refresh de la sesión.
 
 El token es simple y no autoriza por sí solo: el `access_token` solo prueba
-quién dice ser el usuario, nunca lleva rol ni permisos (`/CLAUDE.md`,
-«Auth»). La verdad vive en la sesión de Valkey (`session_service.py`).
+quién dice ser el usuario, nunca lleva rol ni permisos. La verdad vive en
+la sesión de Valkey (`session_service.py`).
 """
 
 import secrets

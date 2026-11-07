@@ -4,12 +4,11 @@ Revision ID: 4ebcf7143927
 Revises: 8805ad744e85
 Create Date: 2026-11-07 00:12:25.731413
 
-Semilla: los 3 planes, la TRM de referencia y los parámetros comerciales de
-`/CLAUDE.md` («Planes iniciales», «Costos de referencia verificados»,
-«Billing»), todos vigentes desde 2026-10-01 -- misma fecha que la semilla
-de costos_canal de la migración anterior, por ser la misma investigación
+Semilla: los 3 planes, la TRM de referencia y los parámetros comerciales,
+todos vigentes desde 2026-10-01 -- misma fecha que la semilla de
+costos_canal de la migración anterior, por ser la misma investigación
 de precios. Valores de usuarios/números de WhatsApp por plan: asunción
-razonable autorizada por Luis el 2026-11-06 (ver /CLAUDE.md).
+razonable autorizada por Luis el 2026-11-06.
 """
 
 import uuid
@@ -27,7 +26,7 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 _VIGENTE_DESDE = date(2026, 10, 1)
-_FUENTE_CLAUDE = "/CLAUDE.md, confirmado por Luis el 2026-11-06"
+_FUENTE_CLAUDE = "Confirmado por Luis el 2026-11-06"
 
 
 def upgrade() -> None:

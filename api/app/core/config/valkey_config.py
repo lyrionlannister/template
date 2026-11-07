@@ -1,7 +1,7 @@
 """Configuración de conexión a Valkey leída desde variables de entorno.
 
-Valkey es el fork de Redis bajo la Linux Foundation (ver /CLAUDE.md, "Valkey, no
-Redis"), compatible con el protocolo RESP: el esquema de la URL sigue siendo
+Valkey es el fork de Redis bajo la Linux Foundation, compatible con el
+protocolo RESP: el esquema de la URL sigue siendo
 `redis://` porque es parte del protocolo del cliente (`redis-py`), no de la marca
 del servidor.
 """
@@ -18,7 +18,7 @@ class ValkeyConfig:
     port: str = field(default_factory=lambda: get_or_throw("VALKEY_PORT"))
     password: str = field(default_factory=lambda: get_or_throw("VALKEY_PASSWORD"))
     db: str = "0"
-    DEFAULT_TTL = 10800  # 3 horas, ver /CLAUDE.md "TTL de la sesión en Valkey"
+    DEFAULT_TTL = 10800  # 3 horas, TTL fijo de la sesión en Valkey
 
     @property
     def url(self) -> str:

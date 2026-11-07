@@ -1,5 +1,5 @@
-"""OTP de inicio de sesión: gasto de plataforma, nunca del tenant
-(`/CLAUDE.md`, «OTP de inicio de sesión: gasto interno»). Usa credenciales
+"""OTP de inicio de sesión: gasto de plataforma, nunca del tenant. Usa
+credenciales
 de plataforma para el envío — nunca el WhatsApp ni el saldo del tenant que
 se está autenticando — y no descuenta pool ni saldo de ningún tenant.
 

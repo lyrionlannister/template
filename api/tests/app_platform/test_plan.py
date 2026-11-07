@@ -48,8 +48,8 @@ async def _limpiar_planes_de_prueba():
 
 
 async def test_esencial_real_pasa_la_regla_del_30_porciento():
-    # Mismo ejemplo que CLAUDE.md verifica a mano: Esencial, 1.000 incluidos
-    # a costo Meta vigente, cuesta menos del 30% del neto tras Wompi.
+    # Esencial, 1.000 incluidos a costo Meta vigente, cuesta menos del 30%
+    # del neto tras Wompi (verificado a mano).
     async with async_session_factory() as session:
         with allow_system_scope():
             service = _servicio(session)

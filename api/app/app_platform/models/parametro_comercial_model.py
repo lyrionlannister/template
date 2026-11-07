@@ -2,7 +2,7 @@
 patrón que `CostoCanal`/`TipoCambio`. Cubre cualquier cifra comercial de
 Pulso que no encaje en una tabla propia: días de trial, mensajes gratis de
 trial, precio de onboarding, comisión de Wompi. Nunca una constante en
-código (`/CLAUDE.md`, «Precios parametrizables, nada hardcodeado»).
+código.
 
 Claves vigentes hoy (ver la semilla en la migración): `trial_dias`,
 `trial_mensajes_gratis`, `onboarding_precio_cop`, `comision_wompi_porcentaje`,

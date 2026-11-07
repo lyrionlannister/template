@@ -5,9 +5,8 @@ Revises: 4df3de298e75
 Create Date: 2026-11-06 23:15:48.672646
 
 Semilla: costos verificados de WhatsApp en Colombia, vigentes desde
-2026-10-01 (ver /CLAUDE.md, «Costos de referencia verificados»). SMS y RCS
-quedan sin fila: su tarifa no está verificada (ver «SMS y RCS: fórmula
-pendiente, sin cifra» en /CLAUDE.md) y esta migración no debe inventarla.
+2026-10-01. SMS y RCS quedan sin fila: su tarifa no está verificada y esta
+migración no debe inventarla.
 Estos valores son la semilla inicial del histórico, no una constante del
 sistema: Prompt 02 los fija como primer registro, editable desde el panel.
 """
@@ -26,7 +25,7 @@ down_revision: Union[str, Sequence[str], None] = "4df3de298e75"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-_FUENTE = "Meta Cloud API, tarjeta de precios Colombia; ver /CLAUDE.md 'Costos de referencia verificados'"
+_FUENTE = "Meta Cloud API, tarjeta de precios Colombia"
 _VIGENTE_DESDE = date(2026, 10, 1)
 
 

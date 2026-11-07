@@ -1,5 +1,5 @@
-"""Sesión real del usuario en Valkey. TTL de 3 horas (`/CLAUDE.md`, «Auth»):
-la sesión no se vincula a dispositivo ni IP — un access token robado solo
+"""Sesión real del usuario en Valkey. TTL de 3 horas: la sesión no se
+vincula a dispositivo ni IP — un access token robado solo
 sirve mientras la sesión exista en Valkey; la mitigación es la expiración
 corta más la revocación inmediata en logout y cambio de contraseña, no un
 vínculo a dispositivo.
