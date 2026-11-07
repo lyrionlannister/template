@@ -28,6 +28,15 @@ layers =
     app.messaging.repositories
     app.messaging.models
 
+[importlinter:contract:app_platform-layers]
+name = Capas de app_platform
+type = layers
+layers =
+    app.app_platform.controllers
+    app.app_platform.services
+    app.app_platform.repositories
+    app.app_platform.models
+
 [importlinter:contract:auth-no-cross-domain]
 name = auth no importa repositories/models de otros dominios
 type = forbidden
@@ -38,6 +47,8 @@ forbidden_modules =
     app.contacts.models
     app.messaging.repositories
     app.messaging.models
+    app.app_platform.repositories
+    app.app_platform.models
 
 [importlinter:contract:contacts-no-cross-domain]
 name = contacts no importa repositories/models de otros dominios
@@ -49,6 +60,8 @@ forbidden_modules =
     app.auth.models
     app.messaging.repositories
     app.messaging.models
+    app.app_platform.repositories
+    app.app_platform.models
 
 [importlinter:contract:messaging-no-cross-domain]
 name = messaging no importa repositories/models de otros dominios
@@ -60,3 +73,18 @@ forbidden_modules =
     app.auth.models
     app.contacts.repositories
     app.contacts.models
+    app.app_platform.repositories
+    app.app_platform.models
+
+[importlinter:contract:app_platform-no-cross-domain]
+name = app_platform no importa repositories/models de otros dominios
+type = forbidden
+source_modules =
+    app.app_platform
+forbidden_modules =
+    app.auth.repositories
+    app.auth.models
+    app.contacts.repositories
+    app.contacts.models
+    app.messaging.repositories
+    app.messaging.models

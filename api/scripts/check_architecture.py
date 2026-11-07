@@ -16,6 +16,12 @@ LAYER_FORBIDDEN = {
     "controllers": {"repositories", "models"},
     "models": {"services", "repositories", "controllers"},
 }
+# Excepción legítima y documentada (code-distribution, 3.4 "Cableado global"):
+# core/config/models_registry.py importa cada *_model.py de cada dominio a
+# propósito, para que SQLAlchemy registre el mapeo en Base.metadata antes de
+# que Alembic compare el esquema. No es un cruce de dominio sin pasar por
+# services -- es infraestructura compartida que el propio proyecto pide.
+EXCEPCIONES_CRUCE_DOMINIO = {"core/config/models_registry.py"}
 
 
 def imported_modules(path: Path) -> list[str]:
@@ -31,6 +37,8 @@ def imported_modules(path: Path) -> list[str]:
 
 def check_file(path: Path, domains: list[str]) -> list[str]:
     rel = path.relative_to(APP_ROOT)
+    if rel.as_posix() in EXCEPCIONES_CRUCE_DOMINIO:
+        return []
     parts = rel.parts  # <dominio>/<capa>/archivo.py
     if len(parts) < 3:
         return []
@@ -47,10 +55,18 @@ def check_file(path: Path, domains: list[str]) -> list[str]:
 
         forbidden_layers = LAYER_FORBIDDEN.get(layer, set())
         if mod_domain == domain and mod_layer in forbidden_layers:
-            violations.append(f"{rel}: {layer}/ importa {mod} (capa prohibida: {mod_layer})")
+            violations.append(
+                f"{rel}: {layer}/ importa {mod} (capa prohibida: {mod_layer})"
+            )
 
-        if mod_domain != domain and mod_domain in domains and mod_layer in {"repositories", "models"}:
-            violations.append(f"{rel}: cruza a dominio '{mod_domain}' via {mod_layer} en vez de services")
+        if (
+            mod_domain != domain
+            and mod_domain in domains
+            and mod_layer in {"repositories", "models"}
+        ):
+            violations.append(
+                f"{rel}: cruza a dominio '{mod_domain}' via {mod_layer} en vez de services"
+            )
 
     return violations
 
