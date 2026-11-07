@@ -3,9 +3,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.app_platform.controllers.costo_canal_controller import (
+    router as costo_canal_router,
+)
 from app.core.config.env_tools import get_or_default
 
 app = FastAPI(title="Pulso API")
+app.include_router(costo_canal_router)
 
 allowed_origins = [
     origin.strip()

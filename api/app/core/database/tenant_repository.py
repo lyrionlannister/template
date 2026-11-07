@@ -1,4 +1,4 @@
-"""Base de repository para modelos de tenant: el único punto donde se construye
+"""Repository base para modelos de tenant: el único punto donde se construye
 una query sobre un modelo `TenantScopedMixin`. Un repository concreto arma su
 query a partir de `self.scoped()`, nunca con `select(self.model)` directo —
 así el filtro de tenant no depende de que cada autor se acuerde de ponerlo.
@@ -6,10 +6,10 @@ así el filtro de tenant no depende de que cada autor se acuerde de ponerlo.
 Cache-aside: `get_by_id` lee de Valkey antes que de Postgres; en miss, trae
 de Postgres y cachea. La key SIEMPRE lleva el tenant (`tabla:tenant:id`): una
 key sin tenant sería una fuga entre tenants tan grave como una query sin
-filtro. `session.get()` hace la búsqueda por PK sin pasar por `scoped()`, así
-que se revalida `tenant_id` después de leer, antes de cachear o devolver —
-si no, alguien podría pedir un id de otro tenant y, con suerte de colisión
-de PK, leer su fila.
+filtro. `session.get()` (heredado de `RepositoryBase`) hace la búsqueda por
+PK sin pasar por `scoped()`, así que se revalida `tenant_id` después de
+leer, antes de cachear o devolver — si no, alguien podría pedir un id de
+otro tenant y, con suerte de colisión de PK, leer su fila.
 """
 
 import json
@@ -18,31 +18,21 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import Select, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database.base import TenantScopedMixin
+from app.core.database.repository_base import RepositoryBase
 from app.core.database.tenant_context import get_current_tenant_id
 from app.core.valkey.client import valkey_client
 
 _CACHE_TTL_SEGUNDOS_DEFAULT = 300
 
 
-class TenantScopedRepository[ModelT: TenantScopedMixin]:
-    model: type[ModelT]
+class TenantScopedRepository[ModelT: TenantScopedMixin](RepositoryBase[ModelT]):
     cache_ttl_segundos: int = _CACHE_TTL_SEGUNDOS_DEFAULT
-
-    def __init__(self, session: AsyncSession):
-        self.session = session
 
     def scoped(self) -> Select:
         tenant_id = get_current_tenant_id()
         return select(self.model).where(self.model.tenant_id == tenant_id)
-
-    async def add(self, instancia: ModelT) -> ModelT:
-        self.session.add(instancia)
-        await self.session.flush()
-        await self.session.refresh(instancia)
-        return instancia
 
     async def get_by_id(self, id_interno: int) -> ModelT | None:
         tenant_id = get_current_tenant_id()
@@ -52,7 +42,7 @@ class TenantScopedRepository[ModelT: TenantScopedMixin]:
         if crudo is not None:
             return self._deserializar(crudo)
 
-        instancia = await self.session.get(self.model, id_interno)
+        instancia = await super().get_by_id(id_interno)
         if instancia is None or instancia.tenant_id != tenant_id:
             return None
 
@@ -66,17 +56,13 @@ class TenantScopedRepository[ModelT: TenantScopedMixin]:
         return list(resultado.scalars().all())
 
     async def update(self, instancia: ModelT) -> ModelT:
-        fusionada = await self.session.merge(instancia)
-        await self.session.flush()
-        await self.session.refresh(fusionada)
-        await self._invalidar(fusionada.id)
-        return fusionada
+        actualizada = await super().update(instancia)
+        await self._invalidar(actualizada.id)
+        return actualizada
 
     async def delete(self, instancia: ModelT) -> None:
-        adjunta = await self.session.merge(instancia)
-        id_interno = adjunta.id
-        await self.session.delete(adjunta)
-        await self.session.flush()
+        id_interno = instancia.id
+        await super().delete(instancia)
         await self._invalidar(id_interno)
 
     def _clave_cache(self, id_interno: int, tenant_id: int) -> str:
