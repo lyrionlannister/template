@@ -19,6 +19,7 @@ from app.auth.services.auth_service import AuthService
 from app.billing.clients.wompi_client import WompiClient
 from app.billing.services.evento_pago_service import EventoPagoService
 from app.billing.services.fuente_de_pago_service import FuenteDePagoService
+from app.billing.services.movimiento_saldo_service import MovimientoSaldoService
 from app.billing.services.onboarding_service import OnboardingService
 from app.billing.services.suscripcion_service import SuscripcionService
 from app.core.database.session import get_db_session
@@ -81,6 +82,16 @@ def get_fuente_de_pago_service(
     )
 
 
+def get_movimiento_saldo_service(
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    wompi_client: WompiClientDep,
+) -> MovimientoSaldoService:
+    return MovimientoSaldoService(session, wompi_client)
+
+
+MovimientoSaldoServiceDep = Annotated[
+    MovimientoSaldoService, Depends(get_movimiento_saldo_service)
+]
 EventoPagoServiceDep = Annotated[EventoPagoService, Depends(get_evento_pago_service)]
 OnboardingServiceDep = Annotated[OnboardingService, Depends(get_onboarding_service)]
 SuscripcionServiceDep = Annotated[SuscripcionService, Depends(get_suscripcion_service)]

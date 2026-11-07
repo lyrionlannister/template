@@ -26,6 +26,9 @@ from app.billing.exceptions import ChecksumInvalidoError
 from app.billing.models.evento_pago_procesado_model import EventoPagoProcesado
 from app.billing.repositories.cobro_repository import CobroRepository
 from app.billing.repositories.evento_pago_repository import EventoPagoRepository
+from app.billing.repositories.movimiento_saldo_repository import (
+    MovimientoSaldoRepository,
+)
 from app.billing.repositories.suscripcion_repository import SuscripcionRepository
 from app.billing.services.suscripcion_service import un_mes_despues
 from app.core.database.tenant_context import set_current_tenant
@@ -66,6 +69,7 @@ class EventoPagoService:
         self.session = session
         self.repository = EventoPagoRepository(session)
         self.cobro_repository = CobroRepository(session)
+        self.movimiento_saldo_repository = MovimientoSaldoRepository(session)
         self.suscripcion_repository = SuscripcionRepository(session)
         self.auth_service = auth_service
         self.parametro_comercial_service = parametro_comercial_service
@@ -91,9 +95,21 @@ class EventoPagoService:
             if referencia
             else None
         )
+        movimiento_saldo = (
+            await self.movimiento_saldo_repository.obtener_por_referencia_global(
+                referencia
+            )
+            if referencia and cobro is None
+            else None
+        )
 
+        tenant_id_resuelto = (
+            cobro.tenant_id
+            if cobro
+            else movimiento_saldo.tenant_id if movimiento_saldo else None
+        )
         nuevo = EventoPagoProcesado(
-            tenant_id=cobro.tenant_id if cobro else None,
+            tenant_id=tenant_id_resuelto,
             pasarela=PASARELA,
             id_evento_externo=clave,
             evento=str(payload.get("event", "")),
@@ -110,7 +126,23 @@ class EventoPagoService:
 
         if cobro is not None:
             await self._reconciliar_cobro(cobro, transaccion.get("status"))
+        elif movimiento_saldo is not None:
+            await self._reconciliar_movimiento_saldo(
+                movimiento_saldo, transaccion.get("status")
+            )
         return creado
+
+    async def _reconciliar_movimiento_saldo(
+        self, movimiento, status_wompi: str | None
+    ) -> None:
+        nuevo_estado = _ESTADO_WOMPI_A_PROPIO.get(str(status_wompi))
+        if nuevo_estado is None:
+            return  # PENDING u otro estado transitorio: nada que confirmar aún.
+
+        with set_current_tenant(movimiento.tenant_id):
+            movimiento.estado = nuevo_estado
+            await self.movimiento_saldo_repository.update(movimiento)
+            await self.session.commit()
 
     async def _reconciliar_cobro(self, cobro, status_wompi: str | None) -> None:
         nuevo_estado = _ESTADO_WOMPI_A_PROPIO.get(str(status_wompi))

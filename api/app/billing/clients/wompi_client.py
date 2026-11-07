@@ -170,11 +170,16 @@ class WompiClient:
         payment_source_id: int | None = None,
         payment_method: dict[str, Any] | None = None,
         installments: int = 1,
+        acceptance_token: str | None = None,
+        accept_personal_auth: str | None = None,
     ) -> dict[str, Any]:
         """`POST /transactions`. Con `payment_source_id` reusa una fuente ya
         tokenizada (onboarding, recarga con tarjeta guardada, cobro
-        recurrente); con `payment_method` crea la transacción con los datos
-        del método (PSE, Nequi puntual)."""
+        recurrente) -- el consentimiento ya quedó registrado al crear esa
+        fuente, no hace falta de nuevo. Con `payment_method` (PSE, Nequi
+        puntual) sí hace falta un `acceptance_token`/`accept_personal_auth`
+        frescos (confirmado en vivo contra el sandbox: sin ellos, 422
+        "acceptance_token no está presente")."""
 
         cuerpo: dict[str, Any] = {
             "amount_in_cents": amount_in_cents,
@@ -190,7 +195,13 @@ class WompiClient:
             cuerpo["payment_source_id"] = payment_source_id
             cuerpo["payment_method"] = {"installments": installments}
         elif payment_method is not None:
+            if acceptance_token is None or accept_personal_auth is None:
+                raise ValueError(
+                    "payment_method requiere acceptance_token y accept_personal_auth."
+                )
             cuerpo["payment_method"] = payment_method
+            cuerpo["acceptance_token"] = acceptance_token
+            cuerpo["accept_personal_auth"] = accept_personal_auth
         else:
             raise ValueError("Se requiere payment_source_id o payment_method.")
 
@@ -212,6 +223,17 @@ class WompiClient:
         respuesta = await self._http.get(
             "/merchants/info",
             headers={"x-merchant-public-key": get_or_throw("WOMPI_PUBLIC_KEY")},
+        )
+        respuesta.raise_for_status()
+        return respuesta.json()
+
+    async def obtener_instituciones_financieras(self) -> dict[str, Any]:
+        """`GET /pse/financial_institutions`: lista de bancos para PSE. Se
+        llama desde el backend por el mismo motivo que `/merchants/info`."""
+
+        respuesta = await self._http.get(
+            "/pse/financial_institutions",
+            headers=self._encabezado_llave_privada(),
         )
         respuesta.raise_for_status()
         return respuesta.json()

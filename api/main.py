@@ -23,6 +23,7 @@ from app.billing.controllers.fuente_de_pago_controller import (
 from app.billing.controllers.onboarding_controller import (
     router as onboarding_router,
 )
+from app.billing.controllers.saldo_controller import router as saldo_router
 from app.billing.controllers.suscripcion_controller import (
     router as suscripcion_router,
 )
@@ -50,6 +51,7 @@ app.include_router(webhook_router)
 app.include_router(onboarding_router)
 app.include_router(fuente_de_pago_router)
 app.include_router(suscripcion_router)
+app.include_router(saldo_router)
 
 allowed_origins = [
     origin.strip()
