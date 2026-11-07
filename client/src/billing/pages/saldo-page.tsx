@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FC, type FormEvent } from "react";
-import { Landmark, Settings, Smartphone, Wallet } from "lucide-react";
+import { CreditCard, Landmark, Settings, Smartphone, Wallet } from "lucide-react";
 import { useAuth } from "../../auth/hooks/use-auth";
 import type { Usuario } from "../../auth/types/usuario";
 import { formatCop } from "../../shared/utils/format-cop";
@@ -15,6 +15,11 @@ import { Spinner } from "../../ui/components/spinner";
 import { Table } from "../../ui/components/table";
 import { TableCell } from "../../ui/components/table-cell";
 import { TableHeadCell } from "../../ui/components/table-head-cell";
+import { TarjetaVisual } from "../../ui/components/tarjeta-visual";
+import { BancoVisual } from "../../ui/components/banco-visual";
+import { NequiVisual } from "../../ui/components/nequi-visual";
+import { SecureStrip } from "../../ui/components/secure-strip";
+import { detectarMarcaTarjeta } from "../../shared/utils/detectar-marca-tarjeta";
 import { useBilling } from "../hooks/use-billing";
 import { useWompiTokenizacion } from "../hooks/use-wompi-tokenizacion";
 import type { TokensDeAceptacion } from "../types/fuente-de-pago";
@@ -209,130 +214,146 @@ export const SaldoPage: FC = () => {
           {errorCarga}
         </Alert>
       ) : (
-        <div className="flex flex-col gap-5 max-w-xl">
-          <div className="bg-surface border border-border rounded-md p-4.75">
-            <h3 className="text-[15px] font-semibold mb-1 flex items-center gap-2">
-              <Wallet className="size-4.5 text-brand" aria-hidden />
-              Saldo disponible
-            </h3>
-            <div className="text-2xl font-semibold mt-2">
-              {saldo ? formatCop(saldo.saldoCop) : "--"}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-5 items-start">
+          <div className="flex flex-col gap-5 min-w-0 lg:order-1">
+          <div className="bg-surface border border-border rounded-md p-4.75 w-full">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3.5">
+              <h3 className="text-[15px] font-semibold">Recargar saldo</h3>
+
+              <div className="self-start">
+                <SegmentedControl
+                  options={[
+                    { value: "tarjeta", label: "Tarjeta" },
+                    { value: "pse", label: "PSE" },
+                    { value: "nequi", label: "Nequi" },
+                  ]}
+                  value={medio}
+                  onChange={(valor) => setMedio(valor as MedioRecarga)}
+                />
+              </div>
             </div>
-          </div>
-
-          <div className="bg-surface border border-border rounded-md p-4.75">
-            <h3 className="text-[15px] font-semibold mb-3.5">Recargar saldo</h3>
-
-            <SegmentedControl
-              options={[
-                { value: "tarjeta", label: "Tarjeta" },
-                { value: "pse", label: "PSE" },
-                { value: "nequi", label: "Nequi" },
-              ]}
-              value={medio}
-              onChange={(valor) => setMedio(valor as MedioRecarga)}
-            />
 
             <form onSubmit={recargar} className="mt-4.5">
-              <Field label="Monto a recargar (COP)" htmlFor="monto-recarga">
-                <Input
-                  id="monto-recarga"
-                  inputMode="numeric"
-                  value={montoCop}
-                  onChange={(event) => setMontoCop(event.target.value.replace(/\D/g, ""))}
-                  required
-                />
-              </Field>
+              <div className="mb-4.5 lg:max-w-175">
+                <Field label="Monto a recargar (COP)" htmlFor="monto-recarga">
+                  <Input
+                    id="monto-recarga"
+                    inputMode="numeric"
+                    value={montoCop}
+                    onChange={(event) => setMontoCop(event.target.value.replace(/\D/g, ""))}
+                    required
+                  />
+                </Field>
+              </div>
 
+              <div className="lg:flex lg:items-start lg:gap-6">
+              <div className="lg:min-h-[292px] lg:w-175 lg:flex-none">
               {medio === "tarjeta" && (
-                <>
-                  <Field label="Número de tarjeta" htmlFor="recarga-card-number">
-                    <Input
-                      id="recarga-card-number"
-                      inputMode="numeric"
-                      autoComplete="cc-number"
-                      value={numero}
-                      onChange={(event) => setNumero(event.target.value)}
-                      required
-                    />
-                  </Field>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4">
-                    <Field label="Mes (MM)" htmlFor="recarga-exp-month">
+                <div className="grid grid-cols-1 lg:grid-cols-[296px_1fr] gap-5 lg:gap-6 items-center mb-4.5">
+                  <TarjetaVisual
+                    marca={detectarMarcaTarjeta(numero)}
+                    numero={numero}
+                    titular={titular}
+                    mesExpiracion={mesExpiracion}
+                    anioExpiracion={anioExpiracion}
+                  />
+
+                  <div className="md:max-w-sm">
+                    <Field label="Número de tarjeta" htmlFor="recarga-card-number">
                       <Input
-                        id="recarga-exp-month"
+                        id="recarga-card-number"
                         inputMode="numeric"
-                        maxLength={2}
-                        value={mesExpiracion}
-                        onChange={(event) => setMesExpiracion(event.target.value)}
+                        autoComplete="cc-number"
+                        value={numero}
+                        onChange={(event) => setNumero(event.target.value)}
                         required
                       />
                     </Field>
-                    <Field label="Año (AA)" htmlFor="recarga-exp-year">
+                    <div className="grid grid-cols-3 gap-x-3">
+                      <Field label="Mes (MM)" htmlFor="recarga-exp-month">
+                        <Input
+                          id="recarga-exp-month"
+                          inputMode="numeric"
+                          maxLength={2}
+                          value={mesExpiracion}
+                          onChange={(event) => setMesExpiracion(event.target.value)}
+                          required
+                        />
+                      </Field>
+                      <Field label="Año (AA)" htmlFor="recarga-exp-year">
+                        <Input
+                          id="recarga-exp-year"
+                          inputMode="numeric"
+                          maxLength={2}
+                          value={anioExpiracion}
+                          onChange={(event) => setAnioExpiracion(event.target.value)}
+                          required
+                        />
+                      </Field>
+                      <Field label="CVC" htmlFor="recarga-cvc">
+                        <Input
+                          id="recarga-cvc"
+                          inputMode="numeric"
+                          maxLength={4}
+                          value={cvc}
+                          onChange={(event) => setCvc(event.target.value)}
+                          required
+                        />
+                      </Field>
+                    </div>
+                    <Field label="Nombre del titular" htmlFor="recarga-card-holder">
                       <Input
-                        id="recarga-exp-year"
-                        inputMode="numeric"
-                        maxLength={2}
-                        value={anioExpiracion}
-                        onChange={(event) => setAnioExpiracion(event.target.value)}
-                        required
-                      />
-                    </Field>
-                    <Field label="CVC" htmlFor="recarga-cvc">
-                      <Input
-                        id="recarga-cvc"
-                        inputMode="numeric"
-                        maxLength={4}
-                        value={cvc}
-                        onChange={(event) => setCvc(event.target.value)}
+                        id="recarga-card-holder"
+                        autoComplete="cc-name"
+                        value={titular}
+                        onChange={(event) => setTitular(event.target.value)}
                         required
                       />
                     </Field>
                   </div>
-                  <Field label="Nombre del titular" htmlFor="recarga-card-holder">
-                    <Input
-                      id="recarga-card-holder"
-                      autoComplete="cc-name"
-                      value={titular}
-                      onChange={(event) => setTitular(event.target.value)}
-                      required
-                    />
-                  </Field>
-                </>
+                </div>
               )}
 
               {medio === "pse" && (
-                <>
-                  <Field label="Banco" htmlFor="recarga-banco">
-                    <Select
-                      id="recarga-banco"
-                      value={bancoCode}
-                      onChange={(event) => setBancoCode(event.target.value)}
-                      options={instituciones.map((i) => ({ value: i.code, label: i.name }))}
-                    />
-                  </Field>
-                  <Field label="Tipo de persona" htmlFor="recarga-tipo-persona">
-                    <Select
-                      id="recarga-tipo-persona"
-                      value={tipoPersona}
-                      onChange={(event) => setTipoPersona(event.target.value as "0" | "1")}
-                      options={[
-                        { value: "0", label: "Natural" },
-                        { value: "1", label: "Jurídica" },
-                      ]}
-                    />
-                  </Field>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
-                    <Field label="Tipo de documento" htmlFor="recarga-tipo-doc">
+                <div className="grid grid-cols-1 lg:grid-cols-[296px_1fr] gap-5 lg:gap-6 items-center mb-4.5">
+                  <BancoVisual
+                    bancoNombre={instituciones.find((i) => i.code === bancoCode)?.name}
+                    montoCop={montoCop}
+                  />
+
+                  <div className="md:max-w-sm">
+                    <Field label="Banco" htmlFor="recarga-banco">
                       <Select
-                        id="recarga-tipo-doc"
-                        value={tipoDocumento}
-                        onChange={(event) => setTipoDocumento(event.target.value)}
-                        options={[
-                          { value: "CC", label: "Cédula de ciudadanía" },
-                          { value: "NIT", label: "NIT" },
-                        ]}
+                        id="recarga-banco"
+                        value={bancoCode}
+                        onChange={(event) => setBancoCode(event.target.value)}
+                        options={instituciones.map((i) => ({ value: i.code, label: i.name }))}
                       />
                     </Field>
+                    <div className="grid grid-cols-2 gap-x-3">
+                      <Field label="Tipo de persona" htmlFor="recarga-tipo-persona">
+                        <Select
+                          id="recarga-tipo-persona"
+                          value={tipoPersona}
+                          onChange={(event) => setTipoPersona(event.target.value as "0" | "1")}
+                          options={[
+                            { value: "0", label: "Natural" },
+                            { value: "1", label: "Jurídica" },
+                          ]}
+                        />
+                      </Field>
+                      <Field label="Tipo de documento" htmlFor="recarga-tipo-doc">
+                        <Select
+                          id="recarga-tipo-doc"
+                          value={tipoDocumento}
+                          onChange={(event) => setTipoDocumento(event.target.value)}
+                          options={[
+                            { value: "CC", label: "Cédula" },
+                            { value: "NIT", label: "NIT" },
+                          ]}
+                        />
+                      </Field>
+                    </div>
                     <Field label="Número de documento" htmlFor="recarga-num-doc">
                       <Input
                         id="recarga-num-doc"
@@ -342,87 +363,103 @@ export const SaldoPage: FC = () => {
                         required
                       />
                     </Field>
+                    <p className="text-ink-3 text-xs flex items-center gap-1.5">
+                      <Landmark className="size-3.5" aria-hidden />
+                      Te llevaremos a la página de tu banco para autenticarte.
+                    </p>
                   </div>
-                  <p className="text-ink-3 text-xs mb-4.5 flex items-center gap-1.5">
-                    <Landmark className="size-3.5" aria-hidden />
-                    Te llevaremos a la página de tu banco para autenticarte.
-                  </p>
-                </>
+                </div>
               )}
 
               {medio === "nequi" && (
-                <Field label="Celular registrado en Nequi" htmlFor="recarga-nequi-phone">
-                  <Input
-                    id="recarga-nequi-phone"
-                    inputMode="numeric"
-                    maxLength={10}
-                    value={telefonoNequi}
-                    onChange={(event) => setTelefonoNequi(event.target.value.replace(/\D/g, ""))}
-                    required
+                <div className="grid grid-cols-1 lg:grid-cols-[296px_1fr] gap-5 lg:gap-6 items-center mb-4.5">
+                  <NequiVisual telefono={telefonoNequi} montoCop={montoCop} />
+
+                  <div className="md:max-w-sm">
+                    <Field label="Celular registrado en Nequi" htmlFor="recarga-nequi-phone">
+                      <Input
+                        id="recarga-nequi-phone"
+                        inputMode="numeric"
+                        maxLength={10}
+                        value={telefonoNequi}
+                        onChange={(event) => setTelefonoNequi(event.target.value.replace(/\D/g, ""))}
+                        required
+                      />
+                      <p className="text-ink-3 text-xs mt-1.5 flex items-center gap-1.5">
+                        <Smartphone className="size-3.5" aria-hidden />
+                        Recibirás una notificación en la app de Nequi para aceptar el pago.
+                      </p>
+                    </Field>
+                  </div>
+                </div>
+              )}
+              </div>
+
+              <div className="mt-4.5 lg:mt-0 lg:flex-1">
+                <SecureStrip />
+              </div>
+              </div>
+
+              <div className="flex flex-col gap-3 mt-4.5 mb-4.5">
+                <label className="flex items-center gap-2.5 text-sm text-ink-2 min-h-11">
+                  <input
+                    type="checkbox"
+                    className="size-4.5 accent-brand"
+                    checked={aceptaTerminos}
+                    onChange={(event) => setAceptaTerminos(event.target.checked)}
                   />
-                  <p className="text-ink-3 text-xs mt-1.5 flex items-center gap-1.5">
-                    <Smartphone className="size-3.5" aria-hidden />
-                    Recibirás una notificación en la app de Nequi para aceptar el pago.
-                  </p>
-                </Field>
-              )}
+                  <span>
+                    Acepto los{" "}
+                    {tokens && (
+                      <a href={tokens.permalinkAceptacion} target="_blank" rel="noreferrer" className="text-brand underline">
+                        términos y condiciones
+                      </a>
+                    )}
+                    .
+                  </span>
+                </label>
+                <label className="flex items-center gap-2.5 text-sm text-ink-2 min-h-11">
+                  <input
+                    type="checkbox"
+                    className="size-4.5 accent-brand"
+                    checked={aceptaDatos}
+                    onChange={(event) => setAceptaDatos(event.target.checked)}
+                  />
+                  <span>
+                    Autorizo el{" "}
+                    {tokens && (
+                      <a href={tokens.permalinkDatos} target="_blank" rel="noreferrer" className="text-brand underline">
+                        tratamiento de mis datos personales
+                      </a>
+                    )}
+                    .
+                  </span>
+                </label>
+              </div>
 
-              <label className="flex items-start gap-2.5 text-sm text-ink-2 mb-3 min-h-11 mt-4.5">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 size-4.5 accent-brand"
-                  checked={aceptaTerminos}
-                  onChange={(event) => setAceptaTerminos(event.target.checked)}
-                />
-                <span>
-                  Acepto los{" "}
-                  {tokens && (
-                    <a href={tokens.permalinkAceptacion} target="_blank" rel="noreferrer" className="text-brand underline">
-                      términos y condiciones
-                    </a>
-                  )}
-                  .
-                </span>
-              </label>
-              <label className="flex items-start gap-2.5 text-sm text-ink-2 mb-4.5 min-h-11">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 size-4.5 accent-brand"
-                  checked={aceptaDatos}
-                  onChange={(event) => setAceptaDatos(event.target.checked)}
-                />
-                <span>
-                  Autorizo el{" "}
-                  {tokens && (
-                    <a href={tokens.permalinkDatos} target="_blank" rel="noreferrer" className="text-brand underline">
-                      tratamiento de mis datos personales
-                    </a>
-                  )}
-                  .
-                </span>
-              </label>
+              <div className="md:max-w-sm">
+                {mensajeEspera && (
+                  <div className="mb-4.5 flex items-center gap-2.5 text-sm text-ink-2">
+                    <Spinner /> {mensajeEspera}
+                  </div>
+                )}
+                {errorRecarga && (
+                  <div className="mb-4.5">
+                    <Alert variant="err" title="No se pudo recargar">
+                      {errorRecarga}
+                    </Alert>
+                  </div>
+                )}
 
-              {mensajeEspera && (
-                <div className="mb-4.5 flex items-center gap-2.5 text-sm text-ink-2">
-                  <Spinner /> {mensajeEspera}
-                </div>
-              )}
-              {errorRecarga && (
-                <div className="mb-4.5">
-                  <Alert variant="err" title="No se pudo recargar">
-                    {errorRecarga}
-                  </Alert>
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                loading={recargando}
-                disabled={!formularioValido}
-                className="w-full justify-center"
-              >
-                Recargar
-              </Button>
+                <Button
+                  type="submit"
+                  loading={recargando}
+                  disabled={!formularioValido}
+                  className="w-full justify-center"
+                >
+                  Recargar
+                </Button>
+              </div>
             </form>
           </div>
 
@@ -471,6 +508,65 @@ export const SaldoPage: FC = () => {
               </div>
             </div>
           )}
+          </div>
+
+          <div className="flex flex-col gap-4 lg:order-2">
+            <div className="bg-ok-soft border border-[color-mix(in_srgb,var(--color-ok)_16%,transparent)] rounded-md p-4">
+              <h3 className="text-xs font-semibold tracking-wide uppercase text-ok-ink flex items-center gap-1.5 mb-1.5">
+                <Wallet className="size-4" aria-hidden />
+                Saldo SMS / RCS
+              </h3>
+              <div className="text-[28px] font-semibold leading-none">
+                {saldo ? formatCop(saldo.saldoCop) : "--"}{" "}
+                <span className="text-sm font-normal text-ink-2">COP</span>
+              </div>
+              <p className="text-ink-2 text-sm mt-2">
+                Solo paga envíos SMS y RCS que excedan tus incluidos. No paga WhatsApp ni tu
+                suscripción.
+              </p>
+            </div>
+
+            <div className="bg-surface border border-border rounded-md p-4">
+              <h3 className="text-[15px] font-semibold mb-3">Formas de recargar saldo</h3>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-start gap-2.5">
+                  <CreditCard className="size-4.5 text-brand flex-none mt-0.5" aria-hidden />
+                  <div>
+                    <div className="font-semibold text-sm">Tarjeta</div>
+                    <p className="text-ink-3 text-xs">Pago único en el widget de Wompi. No queda guardada.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <Landmark className="size-4.5 text-brand flex-none mt-0.5" aria-hidden />
+                  <div>
+                    <div className="font-semibold text-sm">PSE</div>
+                    <p className="text-ink-3 text-xs">Te lleva a la página de tu banco para autenticarte.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <Smartphone className="size-4.5 text-brand flex-none mt-0.5" aria-hidden />
+                  <div>
+                    <div className="font-semibold text-sm">Nequi</div>
+                    <p className="text-ink-3 text-xs">Aceptas el cobro con una notificación en tu app.</p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-ink-3 text-xs mt-3.5 pt-3.5 border-t border-border">
+                Estos tres son pagos de una sola vez. Si quieres que se cobre solo cada mes, agrega
+                una tarjeta en{" "}
+                <a href="/suscripcion" className="text-brand underline">
+                  Suscripción
+                </a>
+                .
+              </p>
+            </div>
+
+            <Alert variant="ok" title="Pulso no guarda tus datos de pago">
+              El número de tarjeta se cifra en tu navegador y viaja directo a Wompi. PSE y Nequi
+              se gestionan en la plataforma de tu banco o de tu app: Pulso solo guarda el estado
+              y el monto del movimiento.
+            </Alert>
+          </div>
         </div>
       )}
     </AppShell>

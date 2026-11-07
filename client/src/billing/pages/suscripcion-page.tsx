@@ -11,6 +11,8 @@ import { Field } from "../../ui/components/field";
 import { Input } from "../../ui/components/input";
 import { Pill } from "../../ui/components/pill";
 import { Spinner } from "../../ui/components/spinner";
+import { TarjetaVisual } from "../../ui/components/tarjeta-visual";
+import { detectarMarcaTarjeta } from "../../shared/utils/detectar-marca-tarjeta";
 import { useBilling } from "../hooks/use-billing";
 import { useWompiTokenizacion } from "../hooks/use-wompi-tokenizacion";
 import type { TokensDeAceptacion } from "../types/fuente-de-pago";
@@ -203,64 +205,55 @@ export const SuscripcionPage: FC = () => {
                 marca, los últimos 4 dígitos y el vencimiento — nunca el número completo ni el CVC.
               </p>
 
-              <div
-                className="rounded-xl p-5 text-white mb-4.5 bg-gradient-to-br from-brand to-brand-active"
-                aria-label={`Tarjeta ${suscripcion.tarjeta.marca ?? ""} terminada en ${suscripcion.tarjeta.ultimosCuatro ?? "----"}`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs tracking-wide opacity-80">PULSO</span>
-                  <span className="text-sm font-semibold uppercase">
-                    {suscripcion.tarjeta.marca ?? "Tarjeta"}
-                  </span>
-                </div>
-                <div className="text-xl tracking-[0.2em] mt-6 mb-4">
-                  •••• •••• •••• {suscripcion.tarjeta.ultimosCuatro ?? "----"}
-                </div>
-                <div className="flex items-end justify-between text-xs">
-                  <span className="uppercase">{suscripcion.tarjeta.titular ?? "—"}</span>
-                  <span>
-                    {suscripcion.tarjeta.mesExpiracion ?? "--"}/{suscripcion.tarjeta.anioExpiracion ?? "--"}
-                  </span>
-                </div>
-              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-[308px_1fr] gap-5 items-start mb-4.5">
+                <TarjetaVisual
+                  marca={suscripcion.tarjeta.marca}
+                  ultimosCuatro={suscripcion.tarjeta.ultimosCuatro ?? undefined}
+                  titular={suscripcion.tarjeta.titular ?? undefined}
+                  mesExpiracion={suscripcion.tarjeta.mesExpiracion ?? undefined}
+                  anioExpiracion={suscripcion.tarjeta.anioExpiracion ?? undefined}
+                />
 
-              <div className="grid grid-cols-2 gap-x-4 gap-y-4 mb-4.5">
-                <div>
-                  <span className="text-xs text-ink-3">Marca</span>
-                  <div className="font-semibold">{suscripcion.tarjeta.marca ?? "--"}</div>
-                </div>
-                <div>
-                  <span className="text-xs text-ink-3">Terminación</span>
-                  <div className="font-semibold">•••• {suscripcion.tarjeta.ultimosCuatro ?? "----"}</div>
-                </div>
-                <div>
-                  <span className="text-xs text-ink-3">Titular</span>
-                  <div className="font-semibold">{suscripcion.tarjeta.titular ?? "--"}</div>
-                </div>
-                <div>
-                  <span className="text-xs text-ink-3">Vencimiento</span>
-                  <div className="font-semibold">
-                    {suscripcion.tarjeta.mesExpiracion ?? "--"} / {suscripcion.tarjeta.anioExpiracion ?? "--"}
+                <div className="min-w-0">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-4 mb-4.5">
+                    <div>
+                      <span className="text-xs text-ink-3">Marca</span>
+                      <div className="font-semibold">{suscripcion.tarjeta.marca ?? "--"}</div>
+                    </div>
+                    <div>
+                      <span className="text-xs text-ink-3">Terminación</span>
+                      <div className="font-semibold">•••• {suscripcion.tarjeta.ultimosCuatro ?? "----"}</div>
+                    </div>
+                    <div>
+                      <span className="text-xs text-ink-3">Titular</span>
+                      <div className="font-semibold">{suscripcion.tarjeta.titular ?? "--"}</div>
+                    </div>
+                    <div>
+                      <span className="text-xs text-ink-3">Vencimiento</span>
+                      <div className="font-semibold">
+                        {suscripcion.tarjeta.mesExpiracion ?? "--"} / {suscripcion.tarjeta.anioExpiracion ?? "--"}
+                      </div>
+                    </div>
                   </div>
+
+                  <p className="text-ink-2 text-sm mb-4.5">
+                    <span className="text-ink-3">Se usa para</span>
+                    <br />
+                    Suscripción mensual
+                    {suscripcion.proximaFechaCobro && (
+                      <>
+                        {" "}
+                        · próximo cobro {formatFecha(suscripcion.proximaFechaCobro)}
+                        {suscripcion.montoCop && ` · ${formatCop(suscripcion.montoCop)}`}
+                      </>
+                    )}
+                  </p>
+
+                  <Button variant="secondary" onClick={() => setCambiandoTarjeta(true)}>
+                    Cambiar tarjeta
+                  </Button>
                 </div>
               </div>
-
-              <p className="text-ink-2 text-sm mb-4.5">
-                <span className="text-ink-3">Se usa para</span>
-                <br />
-                Suscripción mensual
-                {suscripcion.proximaFechaCobro && (
-                  <>
-                    {" "}
-                    · próximo cobro {formatFecha(suscripcion.proximaFechaCobro)}
-                    {suscripcion.montoCop && ` · ${formatCop(suscripcion.montoCop)}`}
-                  </>
-                )}
-              </p>
-
-              <Button variant="secondary" onClick={() => setCambiandoTarjeta(true)}>
-                Cambiar tarjeta
-              </Button>
 
               <p className="text-ink-3 text-xs mt-4.5">
                 <strong>Pulso no guarda tu tarjeta.</strong> Al agregarla, el número se cifra en tu
@@ -272,7 +265,7 @@ export const SuscripcionPage: FC = () => {
           )}
         </div>
       ) : (
-        <div className="bg-surface border border-border rounded-md p-4.75 max-w-xl">
+        <div className="bg-surface border border-border rounded-md p-4.75 max-w-2xl">
           <h3 className="text-[15px] font-semibold mb-1 flex items-center gap-2">
             <CreditCard className="size-4.5 text-brand" aria-hidden />
             {cambiandoTarjeta ? "Cambiar tarjeta" : "Conectar tarjeta para la suscripción"}
@@ -302,130 +295,146 @@ export const SuscripcionPage: FC = () => {
             </div>
           ) : (
             <form onSubmit={conectar}>
-              <Field label="Número de tarjeta" htmlFor="sub-card-number">
-                <Input
-                  id="sub-card-number"
-                  inputMode="numeric"
-                  autoComplete="cc-number"
-                  value={numero}
-                  onChange={(event) => setNumero(event.target.value)}
-                  required
+              <div className="grid grid-cols-1 lg:grid-cols-[296px_1fr] gap-5 lg:gap-6 items-center mb-4.5">
+                <TarjetaVisual
+                  marca={detectarMarcaTarjeta(numero)}
+                  numero={numero}
+                  titular={titular}
+                  mesExpiracion={mesExpiracion}
+                  anioExpiracion={anioExpiracion}
                 />
-              </Field>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4">
-                <Field label="Mes (MM)" htmlFor="sub-card-exp-month">
-                  <Input
-                    id="sub-card-exp-month"
-                    inputMode="numeric"
-                    maxLength={2}
-                    autoComplete="cc-exp-month"
-                    value={mesExpiracion}
-                    onChange={(event) => setMesExpiracion(event.target.value)}
-                    required
-                  />
-                </Field>
-                <Field label="Año (AA)" htmlFor="sub-card-exp-year">
-                  <Input
-                    id="sub-card-exp-year"
-                    inputMode="numeric"
-                    maxLength={2}
-                    autoComplete="cc-exp-year"
-                    value={anioExpiracion}
-                    onChange={(event) => setAnioExpiracion(event.target.value)}
-                    required
-                  />
-                </Field>
-                <Field label="CVC" htmlFor="sub-card-cvc">
-                  <Input
-                    id="sub-card-cvc"
-                    inputMode="numeric"
-                    maxLength={4}
-                    autoComplete="cc-csc"
-                    value={cvc}
-                    onChange={(event) => setCvc(event.target.value)}
-                    required
-                  />
-                </Field>
+                <div className="md:max-w-sm">
+                  <Field label="Número de tarjeta" htmlFor="sub-card-number">
+                    <Input
+                      id="sub-card-number"
+                      inputMode="numeric"
+                      autoComplete="cc-number"
+                      value={numero}
+                      onChange={(event) => setNumero(event.target.value)}
+                      required
+                    />
+                  </Field>
+
+                  <div className="grid grid-cols-3 gap-x-3">
+                    <Field label="Mes (MM)" htmlFor="sub-card-exp-month">
+                      <Input
+                        id="sub-card-exp-month"
+                        inputMode="numeric"
+                        maxLength={2}
+                        autoComplete="cc-exp-month"
+                        value={mesExpiracion}
+                        onChange={(event) => setMesExpiracion(event.target.value)}
+                        required
+                      />
+                    </Field>
+                    <Field label="Año (AA)" htmlFor="sub-card-exp-year">
+                      <Input
+                        id="sub-card-exp-year"
+                        inputMode="numeric"
+                        maxLength={2}
+                        autoComplete="cc-exp-year"
+                        value={anioExpiracion}
+                        onChange={(event) => setAnioExpiracion(event.target.value)}
+                        required
+                      />
+                    </Field>
+                    <Field label="CVC" htmlFor="sub-card-cvc">
+                      <Input
+                        id="sub-card-cvc"
+                        inputMode="numeric"
+                        maxLength={4}
+                        autoComplete="cc-csc"
+                        value={cvc}
+                        onChange={(event) => setCvc(event.target.value)}
+                        required
+                      />
+                    </Field>
+                  </div>
+
+                  <Field label="Nombre del titular" htmlFor="sub-card-holder">
+                    <Input
+                      id="sub-card-holder"
+                      autoComplete="cc-name"
+                      value={titular}
+                      onChange={(event) => setTitular(event.target.value)}
+                      required
+                    />
+                  </Field>
+                </div>
               </div>
 
-              <Field label="Nombre del titular" htmlFor="sub-card-holder">
-                <Input
-                  id="sub-card-holder"
-                  autoComplete="cc-name"
-                  value={titular}
-                  onChange={(event) => setTitular(event.target.value)}
-                  required
-                />
-              </Field>
+              <div className="flex flex-col gap-3 mb-4.5">
+                <label className="flex items-center gap-2.5 text-sm text-ink-2 min-h-11">
+                  <input
+                    type="checkbox"
+                    className="size-4.5 accent-brand"
+                    checked={aceptaTerminos}
+                    onChange={(event) => setAceptaTerminos(event.target.checked)}
+                  />
+                  <span>
+                    Acepto los{" "}
+                    {tokens && (
+                      <a
+                        href={tokens.permalinkAceptacion}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-brand underline"
+                      >
+                        términos y condiciones
+                      </a>
+                    )}
+                    .
+                  </span>
+                </label>
 
-              <label className="flex items-start gap-2.5 text-sm text-ink-2 mb-3 min-h-11">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 size-4.5 accent-brand"
-                  checked={aceptaTerminos}
-                  onChange={(event) => setAceptaTerminos(event.target.checked)}
-                />
-                <span>
-                  Acepto los{" "}
-                  {tokens && (
-                    <a
-                      href={tokens.permalinkAceptacion}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-brand underline"
-                    >
-                      términos y condiciones
-                    </a>
-                  )}
-                  .
-                </span>
-              </label>
+                <label className="flex items-center gap-2.5 text-sm text-ink-2 min-h-11">
+                  <input
+                    type="checkbox"
+                    className="size-4.5 accent-brand"
+                    checked={aceptaDatos}
+                    onChange={(event) => setAceptaDatos(event.target.checked)}
+                  />
+                  <span>
+                    Autorizo el{" "}
+                    {tokens && (
+                      <a
+                        href={tokens.permalinkDatos}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-brand underline"
+                      >
+                        tratamiento de mis datos personales
+                      </a>
+                    )}
+                    .
+                  </span>
+                </label>
+              </div>
 
-              <label className="flex items-start gap-2.5 text-sm text-ink-2 mb-4.5 min-h-11">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 size-4.5 accent-brand"
-                  checked={aceptaDatos}
-                  onChange={(event) => setAceptaDatos(event.target.checked)}
-                />
-                <span>
-                  Autorizo el{" "}
-                  {tokens && (
-                    <a
-                      href={tokens.permalinkDatos}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-brand underline"
-                    >
-                      tratamiento de mis datos personales
-                    </a>
-                  )}
-                  .
-                </span>
-              </label>
+              <div className="md:max-w-sm">
+                {errorConectar && (
+                  <div className="mb-4.5">
+                    <Alert variant="err" title="No se pudo conectar la tarjeta">
+                      {errorConectar}
+                    </Alert>
+                  </div>
+                )}
 
-              {errorConectar && (
-                <div className="mb-4.5">
-                  <Alert variant="err" title="No se pudo conectar la tarjeta">
-                    {errorConectar}
-                  </Alert>
-                </div>
-              )}
-
-              <Button type="submit" disabled={!formularioValido} className="w-full justify-center">
-                {cambiandoTarjeta ? "Guardar tarjeta nueva" : "Conectar tarjeta"}
-              </Button>
-              {cambiandoTarjeta && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="w-full justify-center mt-2.5"
-                  onClick={() => setCambiandoTarjeta(false)}
-                >
-                  Cancelar
+                <Button type="submit" disabled={!formularioValido} className="w-full justify-center">
+                  {cambiandoTarjeta ? "Guardar tarjeta nueva" : "Conectar tarjeta"}
                 </Button>
-              )}
+                {cambiandoTarjeta && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full justify-center mt-2.5"
+                    onClick={() => setCambiandoTarjeta(false)}
+                  >
+                    Cancelar
+                  </Button>
+                )}
+              </div>
             </form>
           )}
         </div>
