@@ -22,6 +22,7 @@ import hashlib
 import re
 import time
 import uuid
+from decimal import Decimal
 
 import httpx
 import pytest
@@ -208,6 +209,7 @@ async def test_onboarding_real_en_sandbox_se_confirma_por_webhook_y_bloquea_repe
 
         estado_inicial = await cliente.get("/billing/onboarding/estado")
         assert estado_inicial.json()["pagado"] is False
+        assert Decimal(estado_inicial.json()["precioCop"]) > 0
 
         token = await _tokenizar_tarjeta_de_prueba_como_lo_haria_el_navegador()
         acceptance_token, accept_personal_auth = await _obtener_tokens_de_aceptacion()

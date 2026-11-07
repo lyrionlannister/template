@@ -20,8 +20,8 @@ router = APIRouter(prefix="/billing/onboarding", tags=["billing"])
 async def estado_onboarding(
     sesion: SesionActual, service: OnboardingServiceDep
 ) -> OnboardingEstadoRespuesta:
-    pagado = await service.esta_pagado(sesion)
-    return OnboardingEstadoRespuesta(pagado=pagado)
+    pagado, precio = await service.consultar_estado(sesion)
+    return OnboardingEstadoRespuesta(pagado=pagado, precio_cop=precio)
 
 
 @router.post("", response_model=CobroRespuesta, status_code=status.HTTP_201_CREATED)

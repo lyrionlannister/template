@@ -49,11 +49,23 @@ class OnboardingService:
         self.parametro_comercial_service = parametro_comercial_service
         self.wompi_client = wompi_client
 
-    async def esta_pagado(self, sesion: SesionUsuario) -> bool:
+    async def _precio_vigente(self) -> Decimal:
+        precio = await self.parametro_comercial_service.valor_vigente(
+            CLAVE_ONBOARDING_PRECIO_COP, date.today()
+        )
+        if precio is None:
+            raise ParametroComercialFaltanteError(
+                f"No hay valor vigente para el parámetro "
+                f"'{CLAVE_ONBOARDING_PRECIO_COP}'."
+            )
+        return precio
+
+    async def consultar_estado(self, sesion: SesionUsuario) -> tuple[bool, Decimal]:
         tenant = await self.auth_service.obtener_tenant(sesion.tenant_id)
         if tenant is None:
             raise ValueError("Tenant no encontrado.")
-        return tenant.onboarding_pagado_en is not None
+        precio = await self._precio_vigente()
+        return tenant.onboarding_pagado_en is not None, precio
 
     async def pagar(
         self,
@@ -73,14 +85,7 @@ class OnboardingService:
         if tenant.onboarding_pagado_en is not None:
             raise OnboardingYaPagadoError("El onboarding ya fue pagado.")
 
-        precio = await self.parametro_comercial_service.valor_vigente(
-            CLAVE_ONBOARDING_PRECIO_COP, date.today()
-        )
-        if precio is None:
-            raise ParametroComercialFaltanteError(
-                f"No hay valor vigente para el parámetro "
-                f"'{CLAVE_ONBOARDING_PRECIO_COP}'."
-            )
+        precio = await self._precio_vigente()
 
         fuente_resp = await self.wompi_client.crear_fuente_de_pago(
             tipo="CARD",

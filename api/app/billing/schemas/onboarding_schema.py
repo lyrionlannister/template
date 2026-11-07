@@ -18,6 +18,11 @@ class OnboardingPagarRequest(BaseSchema):
 
 class OnboardingEstadoRespuesta(BaseSchema):
     pagado: bool
+    precio_cop: Decimal
+
+    @field_serializer("precio_cop")
+    def _serializar_precio(self, valor: Decimal) -> str:
+        return str(valor)
 
 
 class CobroRespuesta(BaseSchema):
