@@ -174,6 +174,25 @@ class AuthService:
     async def obtener_usuario(self, usuario_id: int) -> Usuario | None:
         return await self.usuario_repository.get_by_id(usuario_id)
 
+    async def _obtener_plan_del_tenant(self, tenant_id: int):
+        tenant = await self.tenant_repository.get_by_id(tenant_id)
+        if tenant is None or tenant.plan_id is None:
+            raise LimiteDePlanError(
+                "Esta organización no tiene un plan asignado todavía."
+            )
+        plan = await self.plan_service.obtener(tenant.plan_id)
+        if plan is None:
+            raise LimiteDePlanError(
+                "El plan asignado a esta organización ya no existe."
+            )
+        return plan
+
+    async def obtener_mi_plan(self, sesion: SesionUsuario):
+        """Plan vigente de la organización de `sesion`, para la tarjeta de
+        Ajustes -> Plan y saldo del frontend. No exige alcance de sistema:
+        cualquier usuario autenticado ve el plan de su propia organización."""
+        return await self._obtener_plan_del_tenant(sesion.tenant_id)
+
     async def invitar_usuario(
         self, sesion: SesionUsuario, email: str, password: str
     ) -> Usuario:
@@ -187,17 +206,7 @@ class AuthService:
                 "Solo un administrador de la organización puede invitar usuarios."
             )
 
-        tenant = await self.tenant_repository.get_by_id(sesion.tenant_id)
-        if tenant is None or tenant.plan_id is None:
-            raise LimiteDePlanError(
-                "Esta organización no tiene un plan asignado todavía."
-            )
-        plan = await self.plan_service.obtener(tenant.plan_id)
-        if plan is None:
-            raise LimiteDePlanError(
-                "El plan asignado a esta organización ya no existe."
-            )
-
+        plan = await self._obtener_plan_del_tenant(sesion.tenant_id)
         usuarios_actuales = await self.usuario_repository.get_all()
         await self.plan_service.verificar_limite_usuarios(plan, len(usuarios_actuales))
 

@@ -166,6 +166,25 @@ async def test_verificar_otp_habilita_el_acceso(cliente, capsys):
         await _limpiar(email, usuario_id)
 
 
+async def test_mi_plan_devuelve_el_plan_esencial_asignado_al_registrar(cliente, capsys):
+    email = _email_de_prueba()
+    usuario_id = None
+    try:
+        await _registrar(cliente, email)
+        usuario_id = _usuario_id_desde_cookie(cliente)
+        await cliente.post("/auth/otp/enviar", json={"canal": "whatsapp"})
+        codigo = _extraer_codigo_otp(capsys.readouterr().out)
+        await cliente.post(
+            "/auth/otp/verificar", json={"codigo": codigo, "canal": "whatsapp"}
+        )
+
+        respuesta = await cliente.get("/auth/mi-plan")
+        assert respuesta.status_code == 200
+        assert respuesta.json()["nombre"] == "Esencial"
+    finally:
+        await _limpiar(email, usuario_id)
+
+
 async def test_refresh_reutilizado_tras_rotacion_falla(cliente, capsys):
     email = _email_de_prueba()
     usuario_id = None
