@@ -2,13 +2,17 @@
 «Multi-tenant siempre»). No hereda `TenantScopedMixin`: es él mismo la raíz,
 no un dato que pertenezca a un tenant.
 
-`plan_id` no existe todavía: se agrega como columna + migración cuando el
-dominio de planes exista (Prompt 03), no antes.
+`plan_id` referencia `planes.id` (dominio `app_platform`) solo por nombre de
+tabla, sin importar el modelo `Plan` — no cruza dominios en Python, igual
+que cualquier FK entre dominios. Nullable: hasta que exista billing
+(Prompt 12) un tenant puede no tener plan asignado todavía, aunque
+`AuthService.registrar` ya asigna el plan Esencial por defecto al crear el
+tenant.
 """
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, String
+from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.auth.enums.auth_enums import EstadoTenant
@@ -24,4 +28,7 @@ class Tenant(Base, IdMixin, TimestampMixin):
     )
     trial_fin: Mapped[datetime] = mapped_column(
         "trial_fin", DateTime(timezone=True), nullable=False
+    )
+    plan_id: Mapped[int | None] = mapped_column(
+        "plan_id", BigInteger, ForeignKey("planes.id"), nullable=True
     )

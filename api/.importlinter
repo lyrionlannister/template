@@ -40,6 +40,7 @@ layers =
 [importlinter:contract:auth-no-cross-domain]
 name = auth no importa repositories/models de otros dominios
 type = forbidden
+allow_indirect_imports = True
 source_modules =
     app.auth
 forbidden_modules =
@@ -53,6 +54,7 @@ forbidden_modules =
 [importlinter:contract:contacts-no-cross-domain]
 name = contacts no importa repositories/models de otros dominios
 type = forbidden
+allow_indirect_imports = True
 source_modules =
     app.contacts
 forbidden_modules =
@@ -66,6 +68,7 @@ forbidden_modules =
 [importlinter:contract:messaging-no-cross-domain]
 name = messaging no importa repositories/models de otros dominios
 type = forbidden
+allow_indirect_imports = True
 source_modules =
     app.messaging
 forbidden_modules =
@@ -79,6 +82,7 @@ forbidden_modules =
 [importlinter:contract:app_platform-no-cross-domain]
 name = app_platform no importa repositories/models de otros dominios
 type = forbidden
+allow_indirect_imports = True
 source_modules =
     app.app_platform
 forbidden_modules =

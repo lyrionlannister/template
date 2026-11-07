@@ -27,6 +27,16 @@ class LoginRequest(BaseSchema):
     password: str
 
 
+class InvitarUsuarioRequest(BaseSchema):
+    email: EmailStr
+    password: str
+
+    @field_validator("password")
+    @classmethod
+    def _validar_password(cls, valor: str) -> str:
+        return validar_fortaleza_password(valor)
+
+
 class OtpEnviarRequest(BaseSchema):
     canal: CanalOtp
 

@@ -13,6 +13,14 @@ from typing import Annotated, Any
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.app_platform.dependencies import (
+    get_parametro_comercial_service,
+    get_plan_service,
+)
+from app.app_platform.services.parametro_comercial_service import (
+    ParametroComercialService,
+)
+from app.app_platform.services.plan_service import PlanService
 from app.auth.repositories.codigo_otp_repository import CodigoOtpRepository
 from app.auth.repositories.tenant_repository import TenantRepository
 from app.auth.repositories.usuario_repository import UsuarioRepository
@@ -93,11 +101,17 @@ SesionActual = Annotated[SesionUsuario, Depends(get_sesion_actual)]
 
 def get_auth_service(
     session: Annotated[AsyncSession, Depends(get_db_session)],
+    plan_service: Annotated[PlanService, Depends(get_plan_service)],
+    parametro_comercial_service: Annotated[
+        ParametroComercialService, Depends(get_parametro_comercial_service)
+    ],
 ) -> AuthService:
     return AuthService(
         session=session,
         usuario_repository=UsuarioRepository(session),
         tenant_repository=TenantRepository(session),
+        plan_service=plan_service,
+        parametro_comercial_service=parametro_comercial_service,
     )
 
 

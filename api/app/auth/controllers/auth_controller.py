@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
+from app.app_platform.exceptions import LimiteDePlanError
 from app.auth.dependencies import (
     AuthServiceDep,
     OtpServiceDep,
@@ -14,8 +15,10 @@ from app.auth.exceptions import (
     CodigoOtpYaUsadoError,
     CredencialesInvalidasError,
     LimiteDeIntentosError,
+    PermisoInsuficienteError,
 )
 from app.auth.schemas.auth_schemas import (
+    InvitarUsuarioRequest,
     LoginRequest,
     OtpEnviarRequest,
     OtpVerificarRequest,
@@ -36,15 +39,13 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 _limite_auth = Depends(rate_limit("auth", maximo_intentos=20, ventana_segundos=60))
 
 
+def _a_respuesta(usuario) -> UsuarioRespuesta:
+    return UsuarioRespuesta.model_validate(usuario)
+
+
 def _respuesta_de(resultado: AuthResultado, response: Response) -> UsuarioRespuesta:
     set_auth_cookies(response, resultado.access_token, resultado.refresh_token)
-    usuario = resultado.usuario
-    return UsuarioRespuesta(
-        public_id=usuario.public_id,
-        email=usuario.email,
-        rol=usuario.rol,
-        mfa_habilitado=usuario.mfa_habilitado,
-    )
+    return _a_respuesta(resultado.usuario)
 
 
 @router.post(
@@ -139,9 +140,24 @@ async def quien_soy(sesion: SesionActual, service: AuthServiceDep) -> UsuarioRes
     usuario = await service.obtener_usuario(sesion.usuario_id)
     if usuario is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Usuario no encontrado.")
-    return UsuarioRespuesta(
-        public_id=usuario.public_id,
-        email=usuario.email,
-        rol=usuario.rol,
-        mfa_habilitado=usuario.mfa_habilitado,
-    )
+    return _a_respuesta(usuario)
+
+
+@router.post(
+    "/usuarios",
+    response_model=UsuarioRespuesta,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[_limite_auth],
+)
+async def invitar_usuario(
+    body: InvitarUsuarioRequest, sesion: SesionActual, service: AuthServiceDep
+) -> UsuarioRespuesta:
+    try:
+        usuario = await service.invitar_usuario(sesion, body.email, body.password)
+    except PermisoInsuficienteError as error:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(error)) from error
+    except LimiteDePlanError as error:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(error)) from error
+    return _a_respuesta(usuario)
