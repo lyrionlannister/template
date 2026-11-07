@@ -14,6 +14,9 @@ from app.app_platform.controllers.tipo_cambio_controller import (
     router as tipo_cambio_router,
 )
 from app.auth.controllers.auth_controller import router as auth_router
+from app.billing.controllers.fuente_de_pago_controller import (
+    router as fuente_de_pago_router,
+)
 from app.billing.controllers.onboarding_controller import (
     router as onboarding_router,
 )
@@ -30,6 +33,7 @@ app.include_router(parametro_comercial_router)
 app.include_router(auth_router)
 app.include_router(webhook_router)
 app.include_router(onboarding_router)
+app.include_router(fuente_de_pago_router)
 
 allowed_origins = [
     origin.strip()

@@ -120,6 +120,38 @@ class WompiClient:
         respuesta.raise_for_status()
         return respuesta.json()
 
+    async def crear_preautorizacion(
+        self,
+        *,
+        payment_source_id: int,
+        customer_email: str,
+        acceptance_token: str,
+        accept_personal_auth: str,
+        amount_in_cents: int,
+        currency: str,
+    ) -> dict[str, Any]:
+        """`POST /payment_sources` con `financial_operation: PREAUTHORIZATION`,
+        referenciando una fuente ya tokenizada (`payment_source_id`). Crea una
+        preautorización NUEVA (con su propio id) que pasa por 3DS; una vez
+        queda `AVAILABLE`, ese id es el que se reusa en `crear_transaccion`
+        para cobros recurrentes sin fricción."""
+
+        respuesta = await self._http.post(
+            "/payment_sources",
+            json={
+                "type": "CARD",
+                "payment_source_id": payment_source_id,
+                "customer_email": customer_email,
+                "financial_operation": "PREAUTHORIZATION",
+                "acceptance_token": acceptance_token,
+                "accept_personal_auth": accept_personal_auth,
+                "data": {"amount_in_cents": amount_in_cents, "currency": currency},
+            },
+            headers=self._encabezado_llave_privada(),
+        )
+        respuesta.raise_for_status()
+        return respuesta.json()
+
     async def obtener_fuente_de_pago(self, payment_source_id: int) -> dict[str, Any]:
         respuesta = await self._http.get(
             f"/payment_sources/{payment_source_id}",
