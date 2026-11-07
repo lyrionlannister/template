@@ -29,6 +29,9 @@ from app.billing.controllers.suscripcion_controller import (
 )
 from app.billing.controllers.webhook_controller import router as webhook_router
 from app.billing.scheduler import detener_scheduler, iniciar_scheduler
+from app.contacts.controllers.contacts_controller import (
+    router as contacts_router,
+)
 from app.core.config.env_tools import get_or_default
 from app.core.security.origin_check_middleware import OriginCheckMiddleware
 from app.core.security.security_headers_middleware import SecurityHeadersMiddleware
@@ -52,6 +55,7 @@ app.include_router(onboarding_router)
 app.include_router(fuente_de_pago_router)
 app.include_router(suscripcion_router)
 app.include_router(saldo_router)
+app.include_router(contacts_router)
 
 allowed_origins = [
     origin.strip()
