@@ -193,6 +193,20 @@ class AuthService:
         cualquier usuario autenticado ve el plan de su propia organización."""
         return await self._obtener_plan_del_tenant(sesion.tenant_id)
 
+    async def obtener_tenant(self, tenant_id: int) -> Tenant | None:
+        """Único punto por el que `billing` lee un `Tenant`: así no necesita
+        importar `auth.repositories`/`auth.models` (prohibido por
+        `.importlinter`, mismo sentido que `auth -> app_platform.services`)."""
+        return await self.tenant_repository.get_by_id(tenant_id)
+
+    async def marcar_onboarding_pagado(self, tenant_id: int) -> None:
+        tenant = await self.tenant_repository.get_by_id(tenant_id)
+        if tenant is None:
+            raise ValueError(f"Tenant {tenant_id} no encontrado.")
+        tenant.onboarding_pagado_en = datetime.now(UTC)
+        await self.tenant_repository.update(tenant)
+        await self.session.commit()
+
     async def invitar_usuario(
         self, sesion: SesionUsuario, email: str, password: str
     ) -> Usuario:

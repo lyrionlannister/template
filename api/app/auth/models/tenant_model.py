@@ -8,6 +8,11 @@ que cualquier FK entre dominios. Nullable: hasta que exista billing
 (Prompt 12) un tenant puede no tener plan asignado todavía, aunque
 `AuthService.registrar` ya asigna el plan Esencial por defecto al crear el
 tenant.
+
+`onboarding_pagado_en` (fase 5, billing): `None` hasta que el webhook de la
+pasarela confirma el cobro único de onboarding. `billing` nunca escribe esta
+columna directo (no importa `auth.models`): lo hace a través de
+`AuthService.marcar_onboarding_pagado`.
 """
 
 from datetime import datetime
@@ -31,4 +36,7 @@ class Tenant(Base, IdMixin, TimestampMixin):
     )
     plan_id: Mapped[int | None] = mapped_column(
         "plan_id", BigInteger, ForeignKey("planes.id"), nullable=True
+    )
+    onboarding_pagado_en: Mapped[datetime | None] = mapped_column(
+        "onboarding_pagado_en", DateTime(timezone=True), nullable=True
     )

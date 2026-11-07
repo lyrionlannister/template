@@ -1,19 +1,31 @@
 """Procesamiento idempotente de eventos entrantes de la pasarela de pago.
-Deliberadamente no despacha todavía a ningún handler de dominio (onboarding,
-suscripción, recarga): esas tareas no existen aún en este punto del plan.
-Cuando existan, consumirán el `EventoPagoProcesado` devuelto por
-`procesar_webhook` -- la persistencia idempotente ya es el contrato estable,
-el despacho se cablea cuando haya un consumidor real."""
+
+Al confirmar un `Cobro` (onboarding, suscripción) el webhook actualiza su
+estado y, si es el pago de onboarding aprobado, marca el tenant como pagado
+a través de `AuthService` (nunca tocando `auth.models` directo -- ver
+`.importlinter`). La recarga de saldo (`MovimientoSaldo`) y la suscripción
+recurrente llegan en tareas posteriores y se conectan aquí mismo."""
 
 from typing import Any
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.services.auth_service import AuthService
 from app.billing.clients.wompi_client import PASARELA, verificar_checksum_evento
+from app.billing.enums.billing_enums import ConceptoCobro, EstadoTransaccionPago
 from app.billing.exceptions import ChecksumInvalidoError
 from app.billing.models.evento_pago_procesado_model import EventoPagoProcesado
+from app.billing.repositories.cobro_repository import CobroRepository
 from app.billing.repositories.evento_pago_repository import EventoPagoRepository
+from app.core.database.tenant_context import set_current_tenant
+
+_ESTADO_WOMPI_A_PROPIO = {
+    "APPROVED": EstadoTransaccionPago.aprobada,
+    "DECLINED": EstadoTransaccionPago.rechazada,
+    "VOIDED": EstadoTransaccionPago.rechazada,
+    "ERROR": EstadoTransaccionPago.error,
+}
 
 
 def _id_evento_externo(payload: dict[str, Any]) -> str:
@@ -32,9 +44,11 @@ def _id_evento_externo(payload: dict[str, Any]) -> str:
 
 
 class EventoPagoService:
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, auth_service: AuthService):
         self.session = session
         self.repository = EventoPagoRepository(session)
+        self.cobro_repository = CobroRepository(session)
+        self.auth_service = auth_service
 
     async def procesar_webhook(
         self, payload: dict[str, Any]
@@ -50,8 +64,16 @@ class EventoPagoService:
         if existente is not None:
             return None
 
+        transaccion = (payload.get("data") or {}).get("transaction") or {}
+        referencia = transaccion.get("reference")
+        cobro = (
+            await self.cobro_repository.obtener_por_referencia_global(referencia)
+            if referencia
+            else None
+        )
+
         nuevo = EventoPagoProcesado(
-            tenant_id=None,
+            tenant_id=cobro.tenant_id if cobro else None,
             pasarela=PASARELA,
             id_evento_externo=clave,
             evento=str(payload.get("event", "")),
@@ -65,4 +87,23 @@ class EventoPagoService:
             # (la restricción única de la tabla es la garantía real).
             await self.session.rollback()
             return None
+
+        if cobro is not None:
+            await self._reconciliar_cobro(cobro, transaccion.get("status"))
         return creado
+
+    async def _reconciliar_cobro(self, cobro, status_wompi: str | None) -> None:
+        nuevo_estado = _ESTADO_WOMPI_A_PROPIO.get(str(status_wompi))
+        if nuevo_estado is None:
+            return  # PENDING u otro estado transitorio: nada que confirmar aún.
+
+        with set_current_tenant(cobro.tenant_id):
+            cobro.estado = nuevo_estado
+            await self.cobro_repository.update(cobro)
+            await self.session.commit()
+
+            if (
+                cobro.concepto == ConceptoCobro.onboarding
+                and nuevo_estado == EstadoTransaccionPago.aprobada
+            ):
+                await self.auth_service.marcar_onboarding_pagado(cobro.tenant_id)

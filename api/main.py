@@ -14,6 +14,9 @@ from app.app_platform.controllers.tipo_cambio_controller import (
     router as tipo_cambio_router,
 )
 from app.auth.controllers.auth_controller import router as auth_router
+from app.billing.controllers.onboarding_controller import (
+    router as onboarding_router,
+)
 from app.billing.controllers.webhook_controller import router as webhook_router
 from app.core.config.env_tools import get_or_default
 from app.core.security.origin_check_middleware import OriginCheckMiddleware
@@ -26,6 +29,7 @@ app.include_router(tipo_cambio_router)
 app.include_router(parametro_comercial_router)
 app.include_router(auth_router)
 app.include_router(webhook_router)
+app.include_router(onboarding_router)
 
 allowed_origins = [
     origin.strip()

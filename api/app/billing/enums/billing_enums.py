@@ -40,3 +40,12 @@ class EstadoSuscripcion(enum.StrEnum):
 
 class ConceptoMovimientoSaldo(enum.StrEnum):
     recarga = "recarga"
+
+
+class ConceptoCobro(enum.StrEnum):
+    """Cargo que no afecta el saldo utilizable del tenant (eso es
+    `MovimientoSaldo`): el pago único de onboarding y cada ciclo de la
+    suscripción mensual."""
+
+    onboarding = "onboarding"
+    suscripcion = "suscripcion"

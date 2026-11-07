@@ -10,6 +10,7 @@ from app.app_platform.models import (  # noqa: F401
 )
 from app.auth.models import codigo_otp_model, tenant_model, usuario_model  # noqa: F401
 from app.billing.models import (  # noqa: F401
+    cobro_model,
     evento_pago_procesado_model,
     fuente_de_pago_model,
     movimiento_saldo_model,
