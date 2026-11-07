@@ -32,6 +32,9 @@ services:
       VALKEY_PORT: 6379
       VALKEY_PASSWORD: ${VALKEY_PASSWORD}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      ENV: ${ENV}
+      AUTH_TOKEN_SECRET: ${AUTH_TOKEN_SECRET}
+      PASSWORD_PEPPER: ${PASSWORD_PEPPER}
     depends_on:
       - database
       - valkey
