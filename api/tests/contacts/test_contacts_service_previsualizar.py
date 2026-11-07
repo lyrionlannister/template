@@ -25,6 +25,10 @@ from app.contacts.exceptions import (
     LimiteDeFilasExcedidoError,
     TipoDeArchivoNoCoincideError,
 )
+from app.contacts.repositories.contacto_repository import ContactoRepository
+from app.contacts.repositories.importacion_contacto_repository import (
+    ImportacionContactoRepository,
+)
 from app.contacts.services.contacts_service import ContactsService
 from app.core.database.session import async_session_factory
 from app.core.valkey.client import valkey_client
@@ -83,7 +87,14 @@ def _crear_service(session: AsyncSession) -> ContactsService:
         parametro_comercial_service,
     )
     auth_service = get_auth_service(session, plan_service, parametro_comercial_service)
-    return ContactsService(auth_service, plan_service, parametro_comercial_service)
+    return ContactsService(
+        session,
+        auth_service,
+        plan_service,
+        parametro_comercial_service,
+        ContactoRepository(session),
+        ImportacionContactoRepository(session),
+    )
 
 
 async def test_previsualizar_csv_en_el_limite_exacto_cachea_en_valkey() -> None:
