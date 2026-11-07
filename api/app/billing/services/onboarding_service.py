@@ -49,6 +49,12 @@ class OnboardingService:
         self.parametro_comercial_service = parametro_comercial_service
         self.wompi_client = wompi_client
 
+    async def esta_pagado(self, sesion: SesionUsuario) -> bool:
+        tenant = await self.auth_service.obtener_tenant(sesion.tenant_id)
+        if tenant is None:
+            raise ValueError("Tenant no encontrado.")
+        return tenant.onboarding_pagado_en is not None
+
     async def pagar(
         self,
         sesion: SesionUsuario,

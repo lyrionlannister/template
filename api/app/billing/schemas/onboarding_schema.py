@@ -16,6 +16,10 @@ class OnboardingPagarRequest(BaseSchema):
     accept_personal_auth: str
 
 
+class OnboardingEstadoRespuesta(BaseSchema):
+    pagado: bool
+
+
 class CobroRespuesta(BaseSchema):
     estado: EstadoTransaccionPago
     monto_cop: Decimal

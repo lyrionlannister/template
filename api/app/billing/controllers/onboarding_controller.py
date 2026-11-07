@@ -7,9 +7,21 @@ from app.auth.dependencies import SesionActual
 from app.auth.exceptions import PermisoInsuficienteError
 from app.billing.dependencies import OnboardingServiceDep
 from app.billing.exceptions import OnboardingYaPagadoError
-from app.billing.schemas.onboarding_schema import CobroRespuesta, OnboardingPagarRequest
+from app.billing.schemas.onboarding_schema import (
+    CobroRespuesta,
+    OnboardingEstadoRespuesta,
+    OnboardingPagarRequest,
+)
 
 router = APIRouter(prefix="/billing/onboarding", tags=["billing"])
+
+
+@router.get("/estado", response_model=OnboardingEstadoRespuesta)
+async def estado_onboarding(
+    sesion: SesionActual, service: OnboardingServiceDep
+) -> OnboardingEstadoRespuesta:
+    pagado = await service.esta_pagado(sesion)
+    return OnboardingEstadoRespuesta(pagado=pagado)
 
 
 @router.post("", response_model=CobroRespuesta, status_code=status.HTTP_201_CREATED)

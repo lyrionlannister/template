@@ -206,6 +206,9 @@ async def test_onboarding_real_en_sandbox_se_confirma_por_webhook_y_bloquea_repe
         usuario_id = await _registrar_y_verificar_mfa(cliente, email, capsys)
         tenant_id = await _tenant_id_por_usuario(usuario_id)
 
+        estado_inicial = await cliente.get("/billing/onboarding/estado")
+        assert estado_inicial.json()["pagado"] is False
+
         token = await _tokenizar_tarjeta_de_prueba_como_lo_haria_el_navegador()
         acceptance_token, accept_personal_auth = await _obtener_tokens_de_aceptacion()
 
@@ -247,6 +250,9 @@ async def test_onboarding_real_en_sandbox_se_confirma_por_webhook_y_bloquea_repe
         assert respuesta_webhook.status_code == 200
 
         assert await _onboarding_pagado_en(tenant_id) is not None
+
+        estado_final = await cliente.get("/billing/onboarding/estado")
+        assert estado_final.json()["pagado"] is True
 
         async with async_session_factory() as session:
             from app.billing.models.cobro_model import Cobro
