@@ -1,11 +1,11 @@
 """Plan comercial de Pulso: editable por el administrador del sistema, leído
-siempre en vivo (ningún precio ni límite vive en código, `/CLAUDE.md`).
+siempre en vivo. Ningún precio ni límite vive en código.
 
 A diferencia de `CostoCanal`/`TipoCambio`/`ParametroComercial`, un plan no
 se versiona por vigencia: es una fila mutable. El histórico de qué costó y
 qué límite tenía un plan en el pasado lo da el costo/precio aplicado a cada
-consumo cuando ocurrió (`/CLAUDE.md`, «Histórico de costos»), no el plan en
-sí — el plan de hoy es siempre el vigente.
+consumo cuando ocurrió, no el plan en sí — el plan de hoy es siempre el
+vigente.
 """
 
 from decimal import Decimal

@@ -198,8 +198,7 @@ class AuthService:
     ) -> Usuario:
         """Alta de un usuario adicional en la organización de `sesion`.
         Exige rol administrador y respeta `max_usuarios` del plan vigente
-        del tenant (`/CLAUDE.md`, «Aplicación de los límites...»): no se
-        crea el usuario si el límite ya se alcanzó."""
+        del tenant: no se crea el usuario si el límite ya se alcanzó."""
 
         if sesion.rol != RolUsuario.administrador:
             raise PermisoInsuficienteError(

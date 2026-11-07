@@ -1,7 +1,7 @@
 """Contexto de tenant de la petición en curso.
 
-`/CLAUDE.md`: «no existen consultas "globales" fuera del administrador del
-sistema». Por eso el default aquí es cerrado: si nadie fijó un tenant, pedir
+No existen consultas "globales" fuera del administrador del sistema. Por
+eso el default aquí es cerrado: si nadie fijó un tenant, pedir
 el tenant actual falla en vez de devolver `None` silenciosamente — un `None`
 por descuido en una query sin filtrar sería una fuga entre tenants, no un
 error visible. El único bypass es `allow_system_scope()`, explícito y para

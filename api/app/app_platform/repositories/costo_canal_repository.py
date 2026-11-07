@@ -2,8 +2,7 @@
 
 `obtener_vigente` es el único método de lectura de "costo vigente" en todo
 el proyecto: ningún otro código arma su propia query sobre esta tabla para
-esa pregunta — así hay una sola definición de "vigente" (ver `/CLAUDE.md`,
-«Histórico de costos por canal»).
+esa pregunta — así hay una sola definición de "vigente".
 """
 
 from datetime import date

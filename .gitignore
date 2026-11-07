@@ -13,5 +13,7 @@ prompts/
 
 node_modules/
 dist/
-
+graphify-out/
 component-gallery-page.tsx
+
+.graphifyignore

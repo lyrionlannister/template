@@ -1,6 +1,5 @@
 """Schemas de request/response de auth. Ninguno lleva `access_token` ni
-`refresh_token`: esos solo viajan en cookies httpOnly (`/CLAUDE.md`,
-«Auth»)."""
+`refresh_token`: esos solo viajan en cookies httpOnly."""
 
 from uuid import UUID
 

@@ -1,10 +1,9 @@
 """Reglas de negocio de los planes.
 
 `crear`/`actualizar` exigen alcance de sistema y validan la regla de
-rentabilidad del 30 % contra el costo e histórico vigentes (`/CLAUDE.md`,
-«Mensajes incluidos en la suscripción»): el costo de los incluidos no
-puede superar el 30 % del neto de la suscripción tras la comisión de
-Wompi. `verificar_limite_usuarios`/`verificar_limite_numeros_whatsapp` los
+rentabilidad del 30 % contra el costo e histórico vigentes: el costo de
+los incluidos no puede superar el 30 % del neto de la suscripción tras la
+comisión de Wompi. `verificar_limite_usuarios`/`verificar_limite_numeros_whatsapp` los
 usa cualquier dominio que dé de alta un usuario o un número de WhatsApp
 (auth, messaging) — no exigen alcance de sistema: son un chequeo de
 negocio normal dentro del tenant.

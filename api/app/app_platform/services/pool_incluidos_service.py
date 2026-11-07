@@ -1,5 +1,4 @@
-"""Pool mensual de mensajes de WhatsApp incluidos en la suscripción
-(`/CLAUDE.md`, «Mensajes incluidos en la suscripción»).
+"""Pool mensual de mensajes de WhatsApp incluidos en la suscripción.
 
 Solo WhatsApp marketing y utility lo tocan — utility a 1/16 de un crédito
 de marketing. SMS, RCS y las categorías authentication/service de WhatsApp

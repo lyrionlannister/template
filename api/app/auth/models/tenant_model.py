@@ -1,5 +1,5 @@
-"""Tenant: organización cliente de Pulso, raíz de aislamiento (`/CLAUDE.md`,
-«Multi-tenant siempre»). No hereda `TenantScopedMixin`: es él mismo la raíz,
+"""Tenant: organización cliente de Pulso, raíz de aislamiento. No hereda
+`TenantScopedMixin`: es él mismo la raíz,
 no un dato que pertenezca a un tenant.
 
 `plan_id` referencia `planes.id` (dominio `app_platform`) solo por nombre de

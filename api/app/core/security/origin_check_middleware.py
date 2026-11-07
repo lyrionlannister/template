@@ -1,8 +1,8 @@
 """Middleware anti-CSRF: rechaza peticiones mutantes desde orígenes no
 permitidos. La sesión viaja en cookies `SameSite=Lax`, que el navegador sí
 adjunta en peticiones GET de navegación cross-site y en algunos POST de
-formularios cross-site: SameSite solo no basta (`/CLAUDE.md`, «Auth»). Los
-navegadores siempre mandan `Origin` en peticiones mutantes, así que basta
+formularios cross-site: SameSite solo no basta. Los navegadores siempre
+mandan `Origin` en peticiones mutantes, así que basta
 exigir que, si viene, sea uno de `ALLOWED_ORIGINS`. Sin `Origin` no es un
 navegador (webhooks, clientes de API) y no aplica."""
 

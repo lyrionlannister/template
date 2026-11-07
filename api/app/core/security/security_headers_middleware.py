@@ -1,5 +1,5 @@
 """Agrega encabezados de seguridad estándar a cada respuesta (OWASP:
-scaffold seguro por defecto, ver `/CLAUDE.md`)."""
+scaffold seguro por defecto)."""
 
 from collections.abc import Awaitable, Callable
 from typing import Any
