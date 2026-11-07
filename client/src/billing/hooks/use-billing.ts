@@ -29,7 +29,16 @@ export const useBilling = () => {
   );
 
   const iniciarFuenteDePago = useCallback(
-    (datos: { token: string; acceptanceToken: string; acceptPersonalAuth: string }) =>
+    (datos: {
+      token: string;
+      acceptanceToken: string;
+      acceptPersonalAuth: string;
+      marca?: string;
+      ultimosCuatro?: string;
+      mesExpiracion?: string;
+      anioExpiracion?: string;
+      titular?: string;
+    }) =>
       apiClient<FuenteDePago>("/billing/fuentes-de-pago", {
         method: "POST",
         body: JSON.stringify(datos),

@@ -9,6 +9,7 @@ import { AppShell } from "../../ui/components/app-shell";
 import { Button } from "../../ui/components/button";
 import { Field } from "../../ui/components/field";
 import { Input } from "../../ui/components/input";
+import { Pill } from "../../ui/components/pill";
 import { Spinner } from "../../ui/components/spinner";
 import { useBilling } from "../hooks/use-billing";
 import { useWompiTokenizacion } from "../hooks/use-wompi-tokenizacion";
@@ -42,6 +43,7 @@ export const SuscripcionPage: FC = () => {
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [aceptaDatos, setAceptaDatos] = useState(false);
 
+  const [cambiandoTarjeta, setCambiandoTarjeta] = useState(false);
   const [conectando, setConectando] = useState(false);
   const [errorConectar, setErrorConectar] = useState<string | null>(null);
   const [pasoActual, setPasoActual] = useState<"BROWSER_INFO" | "CHALLENGE" | null>(null);
@@ -77,6 +79,7 @@ export const SuscripcionPage: FC = () => {
           setPasoActual(null);
           setIframeHtml(null);
           setConectando(false);
+          setCambiandoTarjeta(false);
           await cargarTodo();
           return;
         }
@@ -104,11 +107,16 @@ export const SuscripcionPage: FC = () => {
     setConectando(true);
     setErrorConectar(null);
     try {
-      const token = await tokenizarTarjeta({ numero, cvc, mesExpiracion, anioExpiracion, titular });
+      const tarjeta = await tokenizarTarjeta({ numero, cvc, mesExpiracion, anioExpiracion, titular });
       const fuente = await iniciarFuenteDePago({
-        token,
+        token: tarjeta.token,
         acceptanceToken: tokens.acceptanceToken,
         acceptPersonalAuth: tokens.acceptPersonalAuth,
+        marca: tarjeta.marca,
+        ultimosCuatro: tarjeta.ultimosCuatro,
+        mesExpiracion: tarjeta.mesExpiracion,
+        anioExpiracion: tarjeta.anioExpiracion,
+        titular: tarjeta.titular,
       });
       await pollearEstado(fuente.publicId);
     } catch (err) {
@@ -150,31 +158,116 @@ export const SuscripcionPage: FC = () => {
         <Alert variant="err" title="No se pudo cargar la suscripción">
           {errorCarga}
         </Alert>
-      ) : suscripcionActiva ? (
-        <div className="bg-surface border border-border rounded-md p-4.75 max-w-xl">
-          <h3 className="text-[15px] font-semibold mb-1 flex items-center gap-2">
-            <RefreshCw className="size-4.5 text-brand" aria-hidden />
-            Suscripción {suscripcion?.estado === "en_reintento" ? "con un pago pendiente" : "activa"}
-          </h3>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-4 mt-4">
-            <div>
-              <span className="text-xs text-ink-3">Monto mensual</span>
-              <div className="font-semibold">
-                {suscripcion?.montoCop ? formatCop(suscripcion.montoCop) : "--"}
+      ) : suscripcionActiva && !cambiandoTarjeta ? (
+        <div className="flex flex-col gap-5 max-w-xl">
+          <div className="bg-surface border border-border rounded-md p-4.75">
+            <h3 className="text-[15px] font-semibold mb-1 flex items-center gap-2">
+              <RefreshCw className="size-4.5 text-brand" aria-hidden />
+              Suscripción {suscripcion?.estado === "en_reintento" ? "con un pago pendiente" : "activa"}
+            </h3>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-4 mt-4">
+              <div>
+                <span className="text-xs text-ink-3">Monto mensual</span>
+                <div className="font-semibold">
+                  {suscripcion?.montoCop ? formatCop(suscripcion.montoCop) : "--"}
+                </div>
+              </div>
+              <div>
+                <span className="text-xs text-ink-3">Próximo cobro</span>
+                <div className="font-semibold">
+                  {suscripcion?.proximaFechaCobro ? formatFecha(suscripcion.proximaFechaCobro) : "--"}
+                </div>
               </div>
             </div>
-            <div>
-              <span className="text-xs text-ink-3">Próximo cobro</span>
-              <div className="font-semibold">
-                {suscripcion?.proximaFechaCobro ? formatFecha(suscripcion.proximaFechaCobro) : "--"}
+            {suscripcion?.estado === "en_reintento" && (
+              <div className="mt-4.5">
+                <Alert variant="warn" title="Reintentando el cobro">
+                  El último intento no se pudo procesar. Se reintentará automáticamente.
+                </Alert>
               </div>
-            </div>
+            )}
           </div>
-          {suscripcion?.estado === "en_reintento" && (
-            <div className="mt-4.5">
-              <Alert variant="warn" title="Reintentando el cobro">
-                El último intento no se pudo procesar. Se reintentará automáticamente.
-              </Alert>
+
+          {suscripcion?.tarjeta && (
+            <div className="bg-surface border border-border rounded-md p-4.75">
+              <div className="flex items-start justify-between gap-3 mb-1">
+                <h3 className="text-[15px] font-semibold flex items-center gap-2">
+                  <CreditCard className="size-4.5 text-brand" aria-hidden />
+                  Método de pago
+                </h3>
+                <Pill variant="ok">Cobro automático activo</Pill>
+              </div>
+              <p className="text-ink-2 text-sm mb-4.5">
+                La tarjeta con la que se cobra tu suscripción cada mes. Queda{" "}
+                <strong className="text-ink">tokenizada en Wompi</strong>: Pulso solo guarda la
+                marca, los últimos 4 dígitos y el vencimiento — nunca el número completo ni el CVC.
+              </p>
+
+              <div
+                className="rounded-xl p-5 text-white mb-4.5 bg-gradient-to-br from-brand to-brand-active"
+                aria-label={`Tarjeta ${suscripcion.tarjeta.marca ?? ""} terminada en ${suscripcion.tarjeta.ultimosCuatro ?? "----"}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs tracking-wide opacity-80">PULSO</span>
+                  <span className="text-sm font-semibold uppercase">
+                    {suscripcion.tarjeta.marca ?? "Tarjeta"}
+                  </span>
+                </div>
+                <div className="text-xl tracking-[0.2em] mt-6 mb-4">
+                  •••• •••• •••• {suscripcion.tarjeta.ultimosCuatro ?? "----"}
+                </div>
+                <div className="flex items-end justify-between text-xs">
+                  <span className="uppercase">{suscripcion.tarjeta.titular ?? "—"}</span>
+                  <span>
+                    {suscripcion.tarjeta.mesExpiracion ?? "--"}/{suscripcion.tarjeta.anioExpiracion ?? "--"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-4 gap-y-4 mb-4.5">
+                <div>
+                  <span className="text-xs text-ink-3">Marca</span>
+                  <div className="font-semibold">{suscripcion.tarjeta.marca ?? "--"}</div>
+                </div>
+                <div>
+                  <span className="text-xs text-ink-3">Terminación</span>
+                  <div className="font-semibold">•••• {suscripcion.tarjeta.ultimosCuatro ?? "----"}</div>
+                </div>
+                <div>
+                  <span className="text-xs text-ink-3">Titular</span>
+                  <div className="font-semibold">{suscripcion.tarjeta.titular ?? "--"}</div>
+                </div>
+                <div>
+                  <span className="text-xs text-ink-3">Vencimiento</span>
+                  <div className="font-semibold">
+                    {suscripcion.tarjeta.mesExpiracion ?? "--"} / {suscripcion.tarjeta.anioExpiracion ?? "--"}
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-ink-2 text-sm mb-4.5">
+                <span className="text-ink-3">Se usa para</span>
+                <br />
+                Suscripción mensual
+                {suscripcion.proximaFechaCobro && (
+                  <>
+                    {" "}
+                    · próximo cobro {formatFecha(suscripcion.proximaFechaCobro)}
+                    {suscripcion.montoCop && ` · ${formatCop(suscripcion.montoCop)}`}
+                  </>
+                )}
+              </p>
+
+              <Button variant="secondary" onClick={() => setCambiandoTarjeta(true)}>
+                Cambiar tarjeta
+              </Button>
+
+              <p className="text-ink-3 text-xs mt-4.5">
+                <strong>Pulso no guarda tu tarjeta.</strong> Al agregarla, el número se cifra en tu
+                navegador y viaja directo a Wompi, que lo tokeniza y puede pedir la verificación
+                3-D Secure de tu banco. Aquí solo quedan la marca, los últimos 4 dígitos y el
+                vencimiento.
+              </p>
             </div>
           )}
         </div>
@@ -182,7 +275,7 @@ export const SuscripcionPage: FC = () => {
         <div className="bg-surface border border-border rounded-md p-4.75 max-w-xl">
           <h3 className="text-[15px] font-semibold mb-1 flex items-center gap-2">
             <CreditCard className="size-4.5 text-brand" aria-hidden />
-            Conectar tarjeta para la suscripción
+            {cambiandoTarjeta ? "Cambiar tarjeta" : "Conectar tarjeta para la suscripción"}
           </h3>
           <p className="text-ink-2 text-sm mb-4.5">
             Tu banco puede pedir una verificación adicional la primera vez.
@@ -321,8 +414,18 @@ export const SuscripcionPage: FC = () => {
               )}
 
               <Button type="submit" disabled={!formularioValido} className="w-full justify-center">
-                Conectar tarjeta
+                {cambiandoTarjeta ? "Guardar tarjeta nueva" : "Conectar tarjeta"}
               </Button>
+              {cambiandoTarjeta && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full justify-center mt-2.5"
+                  onClick={() => setCambiandoTarjeta(false)}
+                >
+                  Cancelar
+                </Button>
+              )}
             </form>
           )}
         </div>

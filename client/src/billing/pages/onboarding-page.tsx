@@ -58,7 +58,7 @@ export const OnboardingPage: FC = () => {
     setPagando(true);
     setErrorPago(null);
     try {
-      const token = await tokenizarTarjeta({
+      const tarjeta = await tokenizarTarjeta({
         numero,
         cvc,
         mesExpiracion,
@@ -66,7 +66,7 @@ export const OnboardingPage: FC = () => {
         titular,
       });
       const resultado = await pagarOnboarding({
-        token,
+        token: tarjeta.token,
         acceptanceToken: estado.acceptanceToken,
         acceptPersonalAuth: estado.acceptPersonalAuth,
       });

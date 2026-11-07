@@ -17,3 +17,11 @@ export interface TokensDeAceptacion {
   permalinkAceptacion: string;
   permalinkDatos: string;
 }
+
+export interface Tarjeta {
+  marca: string | null;
+  ultimosCuatro: string | null;
+  mesExpiracion: string | null;
+  anioExpiracion: string | null;
+  titular: string | null;
+}
