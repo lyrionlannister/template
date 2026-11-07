@@ -3,7 +3,13 @@ pasarela, no en Pulso: aquí solo vive el identificador que la pasarela
 entrega (`id_externo`) y su estado, nunca el número de tarjeta ni el PIN de
 Nequi. `es_recurrente` distingue una fuente creada con preautorización
 (permite cobro recurrente sin 3DS, ver `SuscripcionService`) de una creada
-para un cobro simple (onboarding, recarga puntual)."""
+para un cobro simple (onboarding, recarga puntual).
+
+`marca`/`ultimos_cuatro`/`mes_expiracion`/`anio_expiracion` son solo para
+mostrarle la tarjeta al usuario (p.ej. "Visa •••• 4242") -- vienen de la
+respuesta de tokenización de Wompi, que el navegador ya recibe al tokenizar
+(ver `client/src/billing/hooks/use-wompi-tokenizacion.ts`); el backend nunca
+ve el número completo ni el CVC."""
 
 from sqlalchemy import Boolean, Enum, String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -30,4 +36,14 @@ class FuenteDePago(Base, IdMixin, TenantScopedMixin, TimestampMixin):
     )
     descripcion: Mapped[str | None] = mapped_column(
         "descripcion", String(60), nullable=True
+    )
+    marca: Mapped[str | None] = mapped_column("marca", String(30), nullable=True)
+    ultimos_cuatro: Mapped[str | None] = mapped_column(
+        "ultimos_cuatro", String(4), nullable=True
+    )
+    mes_expiracion: Mapped[str | None] = mapped_column(
+        "mes_expiracion", String(2), nullable=True
+    )
+    anio_expiracion: Mapped[str | None] = mapped_column(
+        "anio_expiracion", String(2), nullable=True
     )

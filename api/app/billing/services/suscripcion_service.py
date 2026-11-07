@@ -83,6 +83,13 @@ class SuscripcionService:
 
         return await self.repository.obtener_activa_del_tenant()
 
+    async def consultar_fuente_de_pago(
+        self, suscripcion: Suscripcion
+    ) -> FuenteDePago | None:
+        if suscripcion.fuente_de_pago_id is None:
+            return None
+        return await self.fuente_repository.get_by_id(suscripcion.fuente_de_pago_id)
+
     async def cobrar_ciclo(self) -> int:
         """Entrypoint de la tarea programada. Devuelve cuántas suscripciones
         se intentaron cobrar hoy (no cuántas quedaron aprobadas: eso lo

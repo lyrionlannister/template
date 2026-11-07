@@ -71,6 +71,10 @@ class FuenteDePagoService:
         token: str,
         acceptance_token: str,
         accept_personal_auth: str,
+        marca: str | None = None,
+        ultimos_cuatro: str | None = None,
+        mes_expiracion: str | None = None,
+        anio_expiracion: str | None = None,
     ) -> FuenteDePago:
         monto_cop = await self._monto_mensual_del_tenant(sesion.tenant_id)
         fuente_simple = await self.wompi_client.crear_fuente_de_pago(
@@ -107,6 +111,10 @@ class FuenteDePagoService:
                 id_externo=str(preauth["data"]["id"]),
                 estado=EstadoFuenteDePago.pendiente,
                 es_recurrente=True,
+                marca=marca,
+                ultimos_cuatro=ultimos_cuatro,
+                mes_expiracion=mes_expiracion,
+                anio_expiracion=anio_expiracion,
                 descripcion="Suscripción",
             )
         )

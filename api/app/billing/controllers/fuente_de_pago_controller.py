@@ -48,7 +48,14 @@ async def iniciar_fuente_de_pago(
 ) -> FuenteDePagoRespuesta:
     try:
         fuente = await service.iniciar_preautorizacion(
-            sesion, body.token, body.acceptance_token, body.accept_personal_auth
+            sesion,
+            body.token,
+            body.acceptance_token,
+            body.accept_personal_auth,
+            marca=body.marca,
+            ultimos_cuatro=body.ultimos_cuatro,
+            mes_expiracion=body.mes_expiracion,
+            anio_expiracion=body.anio_expiracion,
         )
     except LimiteDePlanError as error:
         raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
