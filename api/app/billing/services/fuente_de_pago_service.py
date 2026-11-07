@@ -75,6 +75,7 @@ class FuenteDePagoService:
         ultimos_cuatro: str | None = None,
         mes_expiracion: str | None = None,
         anio_expiracion: str | None = None,
+        titular: str | None = None,
     ) -> FuenteDePago:
         monto_cop = await self._monto_mensual_del_tenant(sesion.tenant_id)
         fuente_simple = await self.wompi_client.crear_fuente_de_pago(
@@ -115,6 +116,7 @@ class FuenteDePagoService:
                 ultimos_cuatro=ultimos_cuatro,
                 mes_expiracion=mes_expiracion,
                 anio_expiracion=anio_expiracion,
+                titular=titular,
                 descripcion="Suscripción",
             )
         )

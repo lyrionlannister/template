@@ -47,3 +47,4 @@ class FuenteDePago(Base, IdMixin, TenantScopedMixin, TimestampMixin):
     anio_expiracion: Mapped[str | None] = mapped_column(
         "anio_expiracion", String(2), nullable=True
     )
+    titular: Mapped[str | None] = mapped_column("titular", String(100), nullable=True)

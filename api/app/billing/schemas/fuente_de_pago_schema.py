@@ -16,6 +16,7 @@ class IniciarFuenteDePagoRequest(BaseSchema):
     ultimos_cuatro: str | None = None
     mes_expiracion: str | None = None
     anio_expiracion: str | None = None
+    titular: str | None = None
 
 
 class FuenteDePagoRespuesta(BaseSchema):
@@ -28,6 +29,7 @@ class TarjetaRespuesta(BaseSchema):
     ultimos_cuatro: str | None
     mes_expiracion: str | None
     anio_expiracion: str | None
+    titular: str | None
 
 
 class EstadoFuenteDePagoRespuesta(BaseSchema):

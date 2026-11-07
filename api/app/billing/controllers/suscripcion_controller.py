@@ -31,6 +31,7 @@ async def estado_suscripcion(
             ultimos_cuatro=fuente.ultimos_cuatro,
             mes_expiracion=fuente.mes_expiracion,
             anio_expiracion=fuente.anio_expiracion,
+            titular=fuente.titular,
         )
         if fuente is not None
         else None

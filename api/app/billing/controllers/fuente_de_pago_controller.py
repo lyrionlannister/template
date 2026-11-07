@@ -56,6 +56,7 @@ async def iniciar_fuente_de_pago(
             ultimos_cuatro=body.ultimos_cuatro,
             mes_expiracion=body.mes_expiracion,
             anio_expiracion=body.anio_expiracion,
+            titular=body.titular,
         )
     except LimiteDePlanError as error:
         raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
