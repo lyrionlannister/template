@@ -73,6 +73,23 @@ def neutralize_formulas(df: pl.DataFrame) -> pl.DataFrame:
     )
 
 
+def tipo_real_coincide(
+    content: bytes, formato: Literal["csv", "xlsx", "parquet"]
+) -> bool:
+    """Sniff liviano del tipo real del archivo contra una extensión que
+    puede mentir: XLSX real es un ZIP (firma `PK\\x03\\x04`), Parquet real
+    empieza en `PAR1`, y un CSV real es texto plano -- no debería traer
+    bytes nulos en su arranque, que es justo lo que delata un binario
+    (XLSX/imagen/etc.) renombrado a `.csv`."""
+
+    cabecera = content[:8]
+    if formato == "xlsx":
+        return cabecera.startswith(b"PK\x03\x04")
+    if formato == "parquet":
+        return cabecera.startswith(b"PAR1")
+    return b"\x00" not in content[:4096]
+
+
 def _leer_csv(content: bytes) -> pl.DataFrame:
     try:
         texto = content.decode("utf-8")

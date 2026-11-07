@@ -13,6 +13,7 @@ from app.core.tools.file_tools import (
     neutralize_formulas,
     read_tabular,
     read_within_limit,
+    tipo_real_coincide,
 )
 
 
@@ -85,3 +86,34 @@ async def test_read_within_limit_acepta_en_el_limite() -> None:
     archivo = _ArchivoFalso(contenido)
     resultado = await read_within_limit(archivo, max_bytes=1024)
     assert resultado == contenido
+
+
+def test_tipo_real_coincide_csv_real() -> None:
+    assert tipo_real_coincide(b"telefono,nombre\n+573001112233,Ana\n", "csv")
+
+
+def test_tipo_real_coincide_rechaza_xlsx_renombrado_a_csv() -> None:
+    libro = openpyxl.Workbook()
+    libro.active.append(["telefono"])
+    buffer = io.BytesIO()
+    libro.save(buffer)
+    assert not tipo_real_coincide(buffer.getvalue(), "csv")
+
+
+def test_tipo_real_coincide_xlsx_real() -> None:
+    libro = openpyxl.Workbook()
+    libro.active.append(["telefono"])
+    buffer = io.BytesIO()
+    libro.save(buffer)
+    assert tipo_real_coincide(buffer.getvalue(), "xlsx")
+
+
+def test_tipo_real_coincide_rechaza_csv_renombrado_a_xlsx() -> None:
+    assert not tipo_real_coincide(b"telefono,nombre\n+57300,Ana\n", "xlsx")
+
+
+def test_tipo_real_coincide_parquet_real() -> None:
+    df = pl.DataFrame({"telefono": ["+573001112233"]})
+    buffer = io.BytesIO()
+    df.write_parquet(buffer)
+    assert tipo_real_coincide(buffer.getvalue(), "parquet")
