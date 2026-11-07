@@ -1,5 +1,5 @@
 """Lógica de negocio de contactos: previsualización e importación de
-archivos CSV/XLSX/Parquet (ver `resources/specs/SPEC-contactos.md`)."""
+archivos CSV/XLSX/Parquet."""
 
 import json
 import uuid
@@ -230,7 +230,6 @@ async def procesar_importacion_en_segundo_plano(
 ) -> None:
     """Corre en el `BackgroundTask`, fuera de la petición HTTP: la sesión
     del request ya cerró para cuando esto se ejecuta, así que abre la suya
-    propia (ver Architecture decisions de `plan-contactos.md`). Implementación
-    completa en la Tarea 5."""
+    propia."""
 
     raise NotImplementedError

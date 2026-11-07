@@ -1,22 +1,19 @@
 """Parser multiformato de archivos tabulares para importaciones (CSV/XLSX/
 Parquet), centralizado aquí -- no en `contacts/utils/` -- porque cualquier
-dominio futuro que importe archivos lo reusa. Corrige el patrón de
-`pybox-monolith`, que duplica este mismo parser por dominio en vez de
-compartirlo.
+dominio futuro que importe archivos lo reusa, en vez de duplicarlo por
+dominio.
 
 Trata el contenido de CSV/XLSX siempre como datos, nunca como fórmulas ni
-como código (ver checklist OWASP de "Contactos" en `api/CLAUDE.md`): este
-módulo nunca evalúa lo que lee, y `read_tabular` no sigue rutas ni
-referencias externas contenidas en el archivo -- solo extrae su contenido
-tabular como texto plano.
+como código: este módulo nunca evalúa lo que lee, y `read_tabular` no
+sigue rutas ni referencias externas contenidas en el archivo -- solo
+extrae su contenido tabular como texto plano.
 
-`neutralize_formulas` queda expuesta aparte (adaptada del patrón de
-exportación de `pybox-monolith`, `core/tools/csv_tools.py`) para que quien
-construya el JSON de variables de un contacto la aplique sobre esos
-valores -- nunca sobre el teléfono: un E.164 válido empieza siempre en `+`,
-que es justo uno de los caracteres que esta función neutraliza, así que
-aplicarla sobre la columna de teléfono de forma automática corrompería
-todos los números."""
+`neutralize_formulas` queda expuesta aparte para que quien construya el
+JSON de variables de un contacto la aplique sobre esos valores -- nunca
+sobre el teléfono: un E.164 válido empieza siempre en `+`, que es justo
+uno de los caracteres que esta función neutraliza, así que aplicarla sobre
+la columna de teléfono de forma automática corrompería todos los
+números."""
 
 import io
 from typing import Literal

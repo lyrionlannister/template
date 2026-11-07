@@ -1,7 +1,6 @@
 """Fila rechazada de una importación, con su motivo exacto -- es el informe
-de rechazos consultable desde el panel (ver `SPEC-contactos.md`, decisión 6).
-Sin FK a `Contacto`: una fila rechazada nunca llegó a crear ni a tocar un
-contacto."""
+de rechazos consultable desde el panel. Sin FK a `Contacto`: una fila
+rechazada nunca llegó a crear ni a tocar un contacto."""
 
 from typing import Any
 

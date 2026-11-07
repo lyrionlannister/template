@@ -22,3 +22,12 @@ class PrevisualizacionNoEncontradaError(ValueError):
 class ColumnaTelefonoInvalidaError(ValueError):
     """La columna de teléfono indicada no está entre las columnas
     detectadas del archivo."""
+
+
+class TelefonoSinCodigoDePaisError(ValueError):
+    """El teléfono no empieza en `+`: sin código de país es ambiguo, y
+    Pulso nunca asume uno por defecto."""
+
+
+class TelefonoInvalidoError(ValueError):
+    """El teléfono trae `+` pero no es un E.164 válido."""

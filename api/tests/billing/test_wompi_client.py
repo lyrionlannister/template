@@ -1,6 +1,5 @@
 """Tests del cliente Wompi: firma de integridad, verificación de checksum de
-webhook y las llamadas HTTP (con transporte simulado, sin red real -- ver
-Tarea 1 de `resources/tasks/plan-billing.md`)."""
+webhook y las llamadas HTTP (con transporte simulado, sin red real)."""
 
 import hashlib
 import json

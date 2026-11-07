@@ -5,8 +5,7 @@ Revises: 4338d7631c4c
 Create Date: 2026-11-07 16:46:55.310941
 
 Semilla: `importacion_tamano_maximo_mb=10` en `parametros_comerciales` --
-límite inicial de tamaño de archivo de importación, admin-editable (ver
-SPEC-contactos.md, decisión 9).
+límite inicial de tamaño de archivo de importación, admin-editable.
 """
 
 import uuid
