@@ -61,8 +61,16 @@ class SuscripcionService:
     async def activar_si_no_existe(
         self, tenant_id: int, fuente_de_pago_id: int, monto_cop: Decimal
     ) -> Suscripcion:
+        """Si ya hay una suscripción activa, "cambiar tarjeta" apunta su
+        cobro a la fuente de pago nueva (la vieja queda huérfana, no se
+        borra: sigue en `fuentes_de_pago` como historial). Si no hay
+        ninguna, crea la suscripción."""
+
         existente = await self.repository.obtener_activa_del_tenant()
         if existente is not None:
+            existente.fuente_de_pago_id = fuente_de_pago_id
+            await self.repository.update(existente)
+            await self.session.commit()
             return existente
         nueva = await self.repository.add(
             Suscripcion(
