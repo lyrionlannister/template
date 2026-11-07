@@ -49,9 +49,8 @@ class FuenteDePagoService:
         self.suscripcion_service = suscripcion_service
 
     async def _monto_mensual_del_tenant(self, tenant_id: int) -> int:
-        """Nunca se confía en un monto que mande el cliente (ver checklist de
-        Billing en `/CLAUDE.md`): se relee el plan vigente del tenant en el
-        servidor en cada preautorización."""
+        """Nunca se confía en un monto que mande el cliente: se relee el
+        plan vigente del tenant en el servidor en cada preautorización."""
 
         tenant = await self.auth_service.obtener_tenant(tenant_id)
         if tenant is None or tenant.plan_id is None:
