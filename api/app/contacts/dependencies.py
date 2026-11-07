@@ -15,6 +15,12 @@ from app.app_platform.services.parametro_comercial_service import (
 from app.app_platform.services.plan_service import PlanService
 from app.auth.dependencies import get_auth_service
 from app.auth.services.auth_service import AuthService
+from app.contacts.repositories.configuracion_contactos_repository import (
+    ConfiguracionContactosRepository,
+)
+from app.contacts.repositories.conflicto_variable_repository import (
+    ConflictoVariableRepository,
+)
 from app.contacts.repositories.contacto_repository import ContactoRepository
 from app.contacts.repositories.importacion_contacto_repository import (
     ImportacionContactoRepository,
@@ -38,6 +44,8 @@ def get_contacts_service(
         parametro_comercial_service,
         ContactoRepository(session),
         ImportacionContactoRepository(session),
+        ConfiguracionContactosRepository(session),
+        ConflictoVariableRepository(session),
     )
 
 

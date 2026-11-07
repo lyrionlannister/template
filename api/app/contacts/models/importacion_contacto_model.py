@@ -45,6 +45,9 @@ class ImportacionContacto(Base, IdMixin, TenantScopedMixin, TimestampMixin):
     filas_rechazadas: Mapped[int] = mapped_column(
         "filas_rechazadas", BigInteger, nullable=False, default=0
     )
+    filas_con_advertencia: Mapped[int] = mapped_column(
+        "filas_con_advertencia", BigInteger, nullable=False, default=0
+    )
     motivo_fallo: Mapped[str | None] = mapped_column(
         "motivo_fallo", String(500), nullable=True
     )

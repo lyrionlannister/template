@@ -31,3 +31,16 @@ class TelefonoSinCodigoDePaisError(ValueError):
 
 class TelefonoInvalidoError(ValueError):
     """El teléfono trae `+` pero no es un E.164 válido."""
+
+
+class ConflictoNoEncontradoError(ValueError):
+    """El conflicto no existe o no pertenece a este tenant."""
+
+
+class ContactoNoEncontradoError(ValueError):
+    """El contacto no existe o no pertenece a este tenant."""
+
+
+class ConflictoYaRevertidoError(ValueError):
+    """El conflicto ya fue revertido antes; revertirlo de nuevo pisaría
+    el valor que el usuario ya restauró a mano."""
