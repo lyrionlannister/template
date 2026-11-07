@@ -25,7 +25,7 @@ Despliegue en contenedores con Podman (`podman compose`).
 
 ## Stack
 
-**Backend:** Python ≥3.15, FastAPI, SQLAlchemy (postgresql-asyncpg), Uvicorn, PostgreSQL, Alembic, Valkey, gestionado con `uv`.
+**Backend:** Python ≥3.14, FastAPI, SQLAlchemy (postgresql-asyncpg), Uvicorn, PostgreSQL, Alembic, Valkey, gestionado con `uv`.
 
 **Frontend:** Vite, React, TypeScript, Tailwind, Lucide.
 
