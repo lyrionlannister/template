@@ -1,5 +1,8 @@
 """Punto de entrada de la API de Pulso."""
 
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -14,16 +17,41 @@ from app.app_platform.controllers.tipo_cambio_controller import (
     router as tipo_cambio_router,
 )
 from app.auth.controllers.auth_controller import router as auth_router
+from app.billing.controllers.fuente_de_pago_controller import (
+    router as fuente_de_pago_router,
+)
+from app.billing.controllers.onboarding_controller import (
+    router as onboarding_router,
+)
+from app.billing.controllers.saldo_controller import router as saldo_router
+from app.billing.controllers.suscripcion_controller import (
+    router as suscripcion_router,
+)
+from app.billing.controllers.webhook_controller import router as webhook_router
+from app.billing.scheduler import detener_scheduler, iniciar_scheduler
 from app.core.config.env_tools import get_or_default
 from app.core.security.origin_check_middleware import OriginCheckMiddleware
 from app.core.security.security_headers_middleware import SecurityHeadersMiddleware
 
-app = FastAPI(title="Pulso API")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
+    iniciar_scheduler()
+    yield
+    detener_scheduler()
+
+
+app = FastAPI(title="Pulso API", lifespan=lifespan)
 app.include_router(costo_canal_router)
 app.include_router(plan_router)
 app.include_router(tipo_cambio_router)
 app.include_router(parametro_comercial_router)
 app.include_router(auth_router)
+app.include_router(webhook_router)
+app.include_router(onboarding_router)
+app.include_router(fuente_de_pago_router)
+app.include_router(suscripcion_router)
+app.include_router(saldo_router)
 
 allowed_origins = [
     origin.strip()

@@ -37,6 +37,15 @@ layers =
     app.app_platform.repositories
     app.app_platform.models
 
+[importlinter:contract:billing-layers]
+name = Capas de billing
+type = layers
+layers =
+    app.billing.controllers
+    app.billing.services
+    app.billing.repositories
+    app.billing.models
+
 [importlinter:contract:auth-no-cross-domain]
 name = auth no importa repositories/models de otros dominios
 type = forbidden
@@ -50,6 +59,8 @@ forbidden_modules =
     app.messaging.models
     app.app_platform.repositories
     app.app_platform.models
+    app.billing.repositories
+    app.billing.models
 
 [importlinter:contract:contacts-no-cross-domain]
 name = contacts no importa repositories/models de otros dominios
@@ -64,6 +75,8 @@ forbidden_modules =
     app.messaging.models
     app.app_platform.repositories
     app.app_platform.models
+    app.billing.repositories
+    app.billing.models
 
 [importlinter:contract:messaging-no-cross-domain]
 name = messaging no importa repositories/models de otros dominios
@@ -78,6 +91,8 @@ forbidden_modules =
     app.contacts.models
     app.app_platform.repositories
     app.app_platform.models
+    app.billing.repositories
+    app.billing.models
 
 [importlinter:contract:app_platform-no-cross-domain]
 name = app_platform no importa repositories/models de otros dominios
@@ -92,3 +107,21 @@ forbidden_modules =
     app.contacts.models
     app.messaging.repositories
     app.messaging.models
+    app.billing.repositories
+    app.billing.models
+
+[importlinter:contract:billing-no-cross-domain]
+name = billing no importa repositories/models de otros dominios
+type = forbidden
+allow_indirect_imports = True
+source_modules =
+    app.billing
+forbidden_modules =
+    app.auth.repositories
+    app.auth.models
+    app.contacts.repositories
+    app.contacts.models
+    app.messaging.repositories
+    app.messaging.models
+    app.app_platform.repositories
+    app.app_platform.models

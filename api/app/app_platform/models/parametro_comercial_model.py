@@ -6,7 +6,8 @@ código.
 
 Claves vigentes hoy (ver la semilla en la migración): `trial_dias`,
 `trial_mensajes_gratis`, `onboarding_precio_cop`, `comision_wompi_porcentaje`,
-`comision_wompi_fijo_cop`, `comision_wompi_iva_porcentaje`.
+`comision_wompi_fijo_cop`, `comision_wompi_iva_porcentaje`,
+`impago_reintentos_max`, `impago_dias_entre_reintentos`.
 """
 
 from datetime import date

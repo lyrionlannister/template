@@ -193,6 +193,43 @@ class AuthService:
         cualquier usuario autenticado ve el plan de su propia organización."""
         return await self._obtener_plan_del_tenant(sesion.tenant_id)
 
+    async def obtener_tenant(self, tenant_id: int) -> Tenant | None:
+        """Único punto por el que `billing` lee un `Tenant`: así no necesita
+        importar `auth.repositories`/`auth.models` (prohibido por
+        `.importlinter`, mismo sentido que `auth -> app_platform.services`)."""
+        return await self.tenant_repository.get_by_id(tenant_id)
+
+    async def marcar_onboarding_pagado(self, tenant_id: int) -> None:
+        tenant = await self.tenant_repository.get_by_id(tenant_id)
+        if tenant is None:
+            raise ValueError(f"Tenant {tenant_id} no encontrado.")
+        tenant.onboarding_pagado_en = datetime.now(UTC)
+        await self.tenant_repository.update(tenant)
+        await self.session.commit()
+
+    async def suspender_tenant(self, tenant_id: int) -> None:
+        """Ciclo de impago (fase 5, billing): agotados los reintentos de la
+        suscripción, el tenant queda `suspendido` -- bloquea envíos, no
+        borra nada. Reactivarlo (pago manual, ajuste de administrador) no
+        está en el alcance de esta fase."""
+
+        tenant = await self.tenant_repository.get_by_id(tenant_id)
+        if tenant is None:
+            raise ValueError(f"Tenant {tenant_id} no encontrado.")
+        tenant.estado = EstadoTenant.suspendido
+        await self.tenant_repository.update(tenant)
+        await self.session.commit()
+
+    async def obtener_email_administrador(self, tenant_id: int) -> str | None:
+        """Requiere tenant en contexto (`set_current_tenant`): lo usa el
+        cobro recurrente de suscripción para saber a quién facturarle."""
+
+        usuarios = await self.usuario_repository.get_all()
+        for usuario in usuarios:
+            if usuario.rol == RolUsuario.administrador:
+                return usuario.email
+        return None
+
     async def invitar_usuario(
         self, sesion: SesionUsuario, email: str, password: str
     ) -> Usuario:
