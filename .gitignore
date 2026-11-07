@@ -1,0 +1,11 @@
+.claude/
+
+
+CLAUDE.md
+.venv
+.env
+__pycache__/
+
+resources/
+
+*.rdb
