@@ -4,6 +4,7 @@ devuelve ese estado, nunca marca el onboarding como pagado por la respuesta
 inmediata de la pasarela."""
 
 import uuid
+from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
@@ -34,6 +35,16 @@ from app.billing.repositories.fuente_de_pago_repository import FuenteDePagoRepos
 CLAVE_ONBOARDING_PRECIO_COP = "onboarding_precio_cop"
 
 
+@dataclass(frozen=True)
+class EstadoOnboarding:
+    pagado: bool
+    precio_cop: Decimal
+    acceptance_token: str
+    accept_personal_auth: str
+    permalink_aceptacion: str
+    permalink_datos: str
+
+
 class OnboardingService:
     def __init__(
         self,
@@ -60,12 +71,22 @@ class OnboardingService:
             )
         return precio
 
-    async def consultar_estado(self, sesion: SesionUsuario) -> tuple[bool, Decimal]:
+    async def consultar_estado(self, sesion: SesionUsuario) -> EstadoOnboarding:
         tenant = await self.auth_service.obtener_tenant(sesion.tenant_id)
         if tenant is None:
             raise ValueError("Tenant no encontrado.")
         precio = await self._precio_vigente()
-        return tenant.onboarding_pagado_en is not None, precio
+        tokens = await self.wompi_client.obtener_tokens_de_aceptacion()
+        presigned_aceptacion = tokens["data"]["presigned_acceptance"]
+        presigned_datos = tokens["data"]["presigned_personal_data_auth"]
+        return EstadoOnboarding(
+            pagado=tenant.onboarding_pagado_en is not None,
+            precio_cop=precio,
+            acceptance_token=presigned_aceptacion["acceptance_token"],
+            accept_personal_auth=presigned_datos["acceptance_token"],
+            permalink_aceptacion=presigned_aceptacion["permalink"],
+            permalink_datos=presigned_datos["permalink"],
+        )
 
     async def pagar(
         self,

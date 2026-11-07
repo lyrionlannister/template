@@ -19,6 +19,10 @@ class OnboardingPagarRequest(BaseSchema):
 class OnboardingEstadoRespuesta(BaseSchema):
     pagado: bool
     precio_cop: Decimal
+    acceptance_token: str
+    accept_personal_auth: str
+    permalink_aceptacion: str
+    permalink_datos: str
 
     @field_serializer("precio_cop")
     def _serializar_precio(self, valor: Decimal) -> str:

@@ -170,6 +170,20 @@ class WompiClient:
         respuesta.raise_for_status()
         return respuesta.json()
 
+    async def obtener_tokens_de_aceptacion(self) -> dict[str, Any]:
+        """`GET /merchants/info`. Se llama desde el backend, no desde el
+        navegador: este endpoint exige el header `x-merchant-public-key` y
+        Wompi no lo habilita para CORS (comprobado en vivo contra el
+        sandbox), a diferencia de `POST /tokens/cards`, que sí está pensado
+        para llamarse directo desde el cliente."""
+
+        respuesta = await self._http.get(
+            "/merchants/info",
+            headers={"x-merchant-public-key": get_or_throw("WOMPI_PUBLIC_KEY")},
+        )
+        respuesta.raise_for_status()
+        return respuesta.json()
+
     async def obtener_transaccion(self, transaction_id: str) -> dict[str, Any]:
         respuesta = await self._http.get(
             f"/transactions/{transaction_id}",

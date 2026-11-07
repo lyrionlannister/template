@@ -155,20 +155,6 @@ async def _tokenizar_tarjeta_de_prueba_como_lo_haria_el_navegador() -> str:
         return respuesta.json()["data"]["id"]
 
 
-async def _obtener_tokens_de_aceptacion() -> tuple[str, str]:
-    async with httpx.AsyncClient(base_url=_WOMPI_BASE_URL) as http:
-        respuesta = await http.get(
-            "/merchants/info",
-            headers={"x-merchant-public-key": get_or_throw("WOMPI_PUBLIC_KEY")},
-        )
-        respuesta.raise_for_status()
-        datos = respuesta.json()["data"]
-        return (
-            datos["presigned_acceptance"]["acceptance_token"],
-            datos["presigned_personal_data_auth"]["acceptance_token"],
-        )
-
-
 def _firmar_evento_transaccion_actualizada(
     transaction_id: str, status: str, amount_in_cents: int, timestamp: int
 ) -> dict:
@@ -207,12 +193,13 @@ async def test_onboarding_real_en_sandbox_se_confirma_por_webhook_y_bloquea_repe
         usuario_id = await _registrar_y_verificar_mfa(cliente, email, capsys)
         tenant_id = await _tenant_id_por_usuario(usuario_id)
 
-        estado_inicial = await cliente.get("/billing/onboarding/estado")
-        assert estado_inicial.json()["pagado"] is False
-        assert Decimal(estado_inicial.json()["precioCop"]) > 0
+        estado_inicial = (await cliente.get("/billing/onboarding/estado")).json()
+        assert estado_inicial["pagado"] is False
+        assert Decimal(estado_inicial["precioCop"]) > 0
+        acceptance_token = estado_inicial["acceptanceToken"]
+        accept_personal_auth = estado_inicial["acceptPersonalAuth"]
 
         token = await _tokenizar_tarjeta_de_prueba_como_lo_haria_el_navegador()
-        acceptance_token, accept_personal_auth = await _obtener_tokens_de_aceptacion()
 
         respuesta = await cliente.post(
             "/billing/onboarding",

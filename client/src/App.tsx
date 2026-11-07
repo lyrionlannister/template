@@ -4,6 +4,7 @@ import { ProtectedRoute } from "./auth/components/protected-route";
 import { AjustesPage } from "./auth/pages/ajustes-page";
 import { SignInPage } from "./auth/pages/sign-in-page";
 import { SignUpPage } from "./auth/pages/sign-up-page";
+import { OnboardingPage } from "./billing/pages/onboarding-page";
 
 export const App: FC = () => (
   <BrowserRouter>
@@ -15,6 +16,14 @@ export const App: FC = () => (
         element={
           <ProtectedRoute>
             <AjustesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/onboarding"
+        element={
+          <ProtectedRoute>
+            <OnboardingPage />
           </ProtectedRoute>
         }
       />
