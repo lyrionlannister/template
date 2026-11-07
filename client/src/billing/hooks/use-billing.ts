@@ -7,6 +7,12 @@ import type {
   TokensDeAceptacion,
 } from "../types/fuente-de-pago";
 import type { OnboardingEstado } from "../types/onboarding-estado";
+import type {
+  InstitucionFinanciera,
+  MovimientoSaldo,
+  RecargaPseResultado,
+  SaldoEstado,
+} from "../types/saldo";
 import type { SuscripcionEstado } from "../types/suscripcion-estado";
 
 export const useBilling = () => {
@@ -57,6 +63,60 @@ export const useBilling = () => {
     [apiClient],
   );
 
+  const obtenerEstadoSaldo = useCallback(
+    () => apiClient<SaldoEstado>("/billing/saldo/estado"),
+    [apiClient],
+  );
+
+  const obtenerInstitucionesFinancieras = useCallback(
+    () => apiClient<InstitucionFinanciera[]>("/billing/saldo/instituciones-financieras"),
+    [apiClient],
+  );
+
+  const consultarEstadoMovimiento = useCallback(
+    (publicId: string) =>
+      apiClient<MovimientoSaldo>(`/billing/saldo/movimientos/${publicId}/estado`),
+    [apiClient],
+  );
+
+  const recargarTarjeta = useCallback(
+    (datos: {
+      montoCop: number;
+      token: string;
+      acceptanceToken: string;
+      acceptPersonalAuth: string;
+    }) =>
+      apiClient<MovimientoSaldo>("/billing/saldo/recargar/tarjeta", {
+        method: "POST",
+        body: JSON.stringify(datos),
+      }),
+    [apiClient],
+  );
+
+  const recargarPse = useCallback(
+    (datos: {
+      montoCop: number;
+      userType: number;
+      userLegalIdType: string;
+      userLegalId: string;
+      financialInstitutionCode: string;
+    }) =>
+      apiClient<RecargaPseResultado>("/billing/saldo/recargar/pse", {
+        method: "POST",
+        body: JSON.stringify(datos),
+      }),
+    [apiClient],
+  );
+
+  const recargarNequi = useCallback(
+    (datos: { montoCop: number; phoneNumber: string }) =>
+      apiClient<MovimientoSaldo>("/billing/saldo/recargar/nequi", {
+        method: "POST",
+        body: JSON.stringify(datos),
+      }),
+    [apiClient],
+  );
+
   return {
     obtenerEstadoOnboarding,
     pagarOnboarding,
@@ -64,5 +124,11 @@ export const useBilling = () => {
     iniciarFuenteDePago,
     consultarEstadoFuenteDePago,
     obtenerEstadoSuscripcion,
+    obtenerEstadoSaldo,
+    obtenerInstitucionesFinancieras,
+    consultarEstadoMovimiento,
+    recargarTarjeta,
+    recargarPse,
+    recargarNequi,
   };
 };

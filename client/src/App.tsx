@@ -5,6 +5,7 @@ import { AjustesPage } from "./auth/pages/ajustes-page";
 import { SignInPage } from "./auth/pages/sign-in-page";
 import { SignUpPage } from "./auth/pages/sign-up-page";
 import { OnboardingPage } from "./billing/pages/onboarding-page";
+import { SaldoPage } from "./billing/pages/saldo-page";
 import { SuscripcionPage } from "./billing/pages/suscripcion-page";
 
 export const App: FC = () => (
@@ -33,6 +34,14 @@ export const App: FC = () => (
         element={
           <ProtectedRoute>
             <SuscripcionPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/saldo"
+        element={
+          <ProtectedRoute>
+            <SaldoPage />
           </ProtectedRoute>
         }
       />
