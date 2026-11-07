@@ -2,5 +2,10 @@
 mapeo en `Base.metadata` antes de que Alembic compare el esquema real contra
 el declarado (autogenerate) o de correr una migración."""
 
-from app.app_platform.models import costo_canal_model  # noqa: F401
+from app.app_platform.models import (  # noqa: F401
+    costo_canal_model,
+    parametro_comercial_model,
+    plan_model,
+    tipo_cambio_model,
+)
 from app.auth.models import codigo_otp_model, tenant_model, usuario_model  # noqa: F401

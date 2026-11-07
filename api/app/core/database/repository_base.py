@@ -10,8 +10,10 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .base import Base
 
-class RepositoryBase[ModelT]:
+
+class RepositoryBase[ModelT: Base]:
     model: type[ModelT]
 
     def __init__(self, session: AsyncSession):

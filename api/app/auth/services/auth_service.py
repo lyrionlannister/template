@@ -1,11 +1,23 @@
 """Registro, login, renovación y cierre de sesión."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.app_platform.exceptions import (
+    LimiteDePlanError,
+    ParametroComercialFaltanteError,
+)
+from app.app_platform.services.parametro_comercial_service import (
+    ParametroComercialService,
+)
+from app.app_platform.services.plan_service import PlanService
 from app.auth.enums.auth_enums import EstadoTenant, RolUsuario
-from app.auth.exceptions import CredencialesInvalidasError, LimiteDeIntentosError
+from app.auth.exceptions import (
+    CredencialesInvalidasError,
+    LimiteDeIntentosError,
+    PermisoInsuficienteError,
+)
 from app.auth.models.tenant_model import Tenant
 from app.auth.models.usuario_model import Usuario
 from app.auth.repositories.tenant_repository import TenantRepository
@@ -17,7 +29,11 @@ from app.core.security.password_hasher import PasswordHasherService
 from app.core.security.token_service import TokenService
 from app.core.valkey.client import increment_with_ttl, valkey_client
 
-TRIAL_DIAS = 14
+# Plan asignado por defecto a todo tenant nuevo hasta que exista billing
+# (Prompt 12) y el tenant elija/pague uno: el más chico, no "sin plan" --
+# así el límite de usuarios/números ya aplica desde el registro.
+PLAN_POR_DEFECTO = "Esencial"
+CLAVE_TRIAL_DIAS = "trial_dias"
 MAXIMO_INTENTOS_LOGIN = 10
 BLOQUEO_LOGIN_SEGUNDOS = 15 * 60
 _CREDENCIALES_INVALIDAS = "Correo o contraseña incorrectos."
@@ -36,10 +52,14 @@ class AuthService:
         session: AsyncSession,
         usuario_repository: UsuarioRepository,
         tenant_repository: TenantRepository,
+        plan_service: PlanService,
+        parametro_comercial_service: ParametroComercialService,
     ):
         self.session = session
         self.usuario_repository = usuario_repository
         self.tenant_repository = tenant_repository
+        self.plan_service = plan_service
+        self.parametro_comercial_service = parametro_comercial_service
         self.password_hasher = PasswordHasherService()
         self.token_service = TokenService()
         self.sesion_service = SesionService()
@@ -60,12 +80,26 @@ class AuthService:
         if await self.usuario_repository.obtener_por_email_global(email):
             raise ValueError("El correo ya está registrado.")
 
+        plan = await self.plan_service.obtener_por_nombre(PLAN_POR_DEFECTO)
+        if plan is None:
+            raise ParametroComercialFaltanteError(
+                f"No existe el plan por defecto '{PLAN_POR_DEFECTO}'."
+            )
+        trial_dias = await self.parametro_comercial_service.valor_vigente(
+            CLAVE_TRIAL_DIAS, date.today()
+        )
+        if trial_dias is None:
+            raise ParametroComercialFaltanteError(
+                f"No hay valor vigente para el parámetro '{CLAVE_TRIAL_DIAS}'."
+            )
+
         ahora = datetime.now(UTC)
         tenant = await self.tenant_repository.add(
             Tenant(
                 nombre=datos.nombre_organizacion,
                 estado=EstadoTenant.trial,
-                trial_fin=ahora + timedelta(days=TRIAL_DIAS),
+                trial_fin=ahora + timedelta(days=int(trial_dias)),
+                plan_id=plan.id,
             )
         )
         usuario = await self.usuario_repository.add(
@@ -139,6 +173,50 @@ class AuthService:
 
     async def obtener_usuario(self, usuario_id: int) -> Usuario | None:
         return await self.usuario_repository.get_by_id(usuario_id)
+
+    async def invitar_usuario(
+        self, sesion: SesionUsuario, email: str, password: str
+    ) -> Usuario:
+        """Alta de un usuario adicional en la organización de `sesion`.
+        Exige rol administrador y respeta `max_usuarios` del plan vigente
+        del tenant (`/CLAUDE.md`, «Aplicación de los límites...»): no se
+        crea el usuario si el límite ya se alcanzó."""
+
+        if sesion.rol != RolUsuario.administrador:
+            raise PermisoInsuficienteError(
+                "Solo un administrador de la organización puede invitar usuarios."
+            )
+
+        tenant = await self.tenant_repository.get_by_id(sesion.tenant_id)
+        if tenant is None or tenant.plan_id is None:
+            raise LimiteDePlanError(
+                "Esta organización no tiene un plan asignado todavía."
+            )
+        plan = await self.plan_service.obtener(tenant.plan_id)
+        if plan is None:
+            raise LimiteDePlanError(
+                "El plan asignado a esta organización ya no existe."
+            )
+
+        usuarios_actuales = await self.usuario_repository.get_all()
+        await self.plan_service.verificar_limite_usuarios(plan, len(usuarios_actuales))
+
+        email_normalizado = email.strip().lower()
+        if await self.usuario_repository.obtener_por_email_global(email_normalizado):
+            raise ValueError("El correo ya está registrado.")
+
+        nuevo = await self.usuario_repository.add(
+            Usuario(
+                tenant_id=sesion.tenant_id,
+                email=email_normalizado,
+                password_hash=self.password_hasher.hash_password(password),
+                rol=RolUsuario.miembro,
+                mfa_habilitado=True,
+                activo=True,
+            )
+        )
+        await self.session.commit()
+        return nuevo
 
     async def _emitir_tokens(
         self, usuario: Usuario, *, login_nuevo: bool

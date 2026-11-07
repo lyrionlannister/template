@@ -19,3 +19,7 @@ class CredencialesInvalidasError(Exception):
 
 class LimiteDeIntentosError(Exception):
     pass
+
+
+class PermisoInsuficienteError(PermissionError):
+    pass
