@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 from app.app_platform.exceptions import LimiteDePlanError
+from app.app_platform.schemas.plan_schema import PlanRespuesta
 from app.auth.dependencies import (
     AuthServiceDep,
     OtpServiceDep,
@@ -141,6 +142,15 @@ async def quien_soy(sesion: SesionActual, service: AuthServiceDep) -> UsuarioRes
     if usuario is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Usuario no encontrado.")
     return _a_respuesta(usuario)
+
+
+@router.get("/mi-plan", response_model=PlanRespuesta)
+async def mi_plan(sesion: SesionActual, service: AuthServiceDep) -> PlanRespuesta:
+    try:
+        plan = await service.obtener_mi_plan(sesion)
+    except LimiteDePlanError as error:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(error)) from error
+    return PlanRespuesta.model_validate(plan)
 
 
 @router.post(
