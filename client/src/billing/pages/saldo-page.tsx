@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FC, type FormEvent } from "react";
-import { CreditCard, Landmark, Settings, Smartphone, Wallet } from "lucide-react";
+import { CreditCard, Landmark, Settings, Smartphone, Users, Wallet } from "lucide-react";
 import { useAuth } from "../../auth/hooks/use-auth";
 import type { Usuario } from "../../auth/types/usuario";
 import { formatCop } from "../../shared/utils/format-cop";
@@ -25,7 +25,10 @@ import { useWompiTokenizacion } from "../hooks/use-wompi-tokenizacion";
 import type { TokensDeAceptacion } from "../types/fuente-de-pago";
 import type { EstadoMovimiento, InstitucionFinanciera, MedioRecarga, SaldoEstado } from "../types/saldo";
 
-const NAV_ITEMS = [{ label: "Ajustes", href: "/ajustes", icon: Settings }];
+const NAV_ITEMS = [
+  { label: "Contactos", href: "/contactos", icon: Users },
+  { label: "Ajustes", href: "/ajustes", icon: Settings },
+];
 
 const inicialesDe = (email: string): string => email.slice(0, 2).toUpperCase();
 

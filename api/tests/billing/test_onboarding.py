@@ -7,8 +7,7 @@ La tokenización de la tarjeta se hace aquí con `httpx` directo contra el
 sandbox de Wompi -- exactamente lo que haría el navegador en producción
 (Tarea 4) -- nunca a través de `app.billing.clients.wompi_client` ni de
 ningún endpoint propio: el backend de Pulso no tiene, y no debe tener,
-ninguna función que acepte un número de tarjeta en claro (ver Boundaries de
-`resources/specs/SPEC-billing.md`).
+ninguna función que acepte un número de tarjeta en claro.
 
 El webhook real de Wompi no puede alcanzar `localhost` en este entorno de
 pruebas, así que el evento se reconstruye con los datos reales de la

@@ -1,6 +1,6 @@
 import { useEffect, useState, type FC, type FormEvent } from "react";
 import { useNavigate } from "react-router";
-import { LogOut, Settings, UserPlus } from "lucide-react";
+import { LogOut, Settings, UserPlus, Users } from "lucide-react";
 import { useAuth } from "../hooks/use-auth";
 import type { Plan } from "../types/plan";
 import type { Usuario } from "../types/usuario";
@@ -16,7 +16,10 @@ import { Pill } from "../../ui/components/pill";
 import { Spinner } from "../../ui/components/spinner";
 import { Tabs } from "../../ui/components/tabs";
 
-const NAV_ITEMS = [{ label: "Ajustes", href: "/ajustes", icon: Settings }];
+const NAV_ITEMS = [
+  { label: "Contactos", href: "/contactos", icon: Users },
+  { label: "Ajustes", href: "/ajustes", icon: Settings },
+];
 
 const inicialesDe = (email: string): string => email.slice(0, 2).toUpperCase();
 

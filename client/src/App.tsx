@@ -7,6 +7,9 @@ import { SignUpPage } from "./auth/pages/sign-up-page";
 import { OnboardingPage } from "./billing/pages/onboarding-page";
 import { SaldoPage } from "./billing/pages/saldo-page";
 import { SuscripcionPage } from "./billing/pages/suscripcion-page";
+import { ConfiguracionContactosPage } from "./contacts/pages/configuracion-contactos-page";
+import { ContactosPage } from "./contacts/pages/contactos-page";
+import { ImportarContactosPage } from "./contacts/pages/importar-contactos-page";
 
 export const App: FC = () => (
   <BrowserRouter>
@@ -42,6 +45,30 @@ export const App: FC = () => (
         element={
           <ProtectedRoute>
             <SaldoPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/contactos"
+        element={
+          <ProtectedRoute>
+            <ContactosPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/contactos/importar"
+        element={
+          <ProtectedRoute>
+            <ImportarContactosPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/contactos/configuracion"
+        element={
+          <ProtectedRoute>
+            <ConfiguracionContactosPage />
           </ProtectedRoute>
         }
       />
