@@ -23,3 +23,15 @@ class LimiteDeIntentosError(Exception):
 
 class PermisoInsuficienteError(PermissionError):
     pass
+
+
+class TokenRecuperacionInvalidoError(Exception):
+    pass
+
+
+class CuentaGoogleNoRegistradaError(Exception):
+    pass
+
+
+class EnvioDeCorreoFallidoError(Exception):
+    pass

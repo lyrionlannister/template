@@ -26,6 +26,24 @@ class LoginRequest(BaseSchema):
     password: str
 
 
+class GoogleLoginRequest(BaseSchema):
+    id_token: str
+
+
+class OlvidePasswordRequest(BaseSchema):
+    email: EmailStr
+
+
+class RestablecerPasswordRequest(BaseSchema):
+    token: str
+    nueva_password: str
+
+    @field_validator("nueva_password")
+    @classmethod
+    def _validar_password(cls, valor: str) -> str:
+        return validar_fortaleza_password(valor)
+
+
 class InvitarUsuarioRequest(BaseSchema):
     email: EmailStr
     password: str

@@ -1,7 +1,12 @@
 """Registro, login, renovación y cierre de sesión."""
 
+import hmac
+import logging
+import secrets
 from datetime import UTC, date, datetime, timedelta
+from hashlib import sha256
 
+import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.app_platform.exceptions import (
@@ -12,11 +17,16 @@ from app.app_platform.services.parametro_comercial_service import (
     ParametroComercialService,
 )
 from app.app_platform.services.plan_service import PlanService
+from app.auth.clients.google_client import GoogleTokenInvalidoError, verificar_id_token
+from app.auth.clients.resend_client import enviar_email
 from app.auth.enums.auth_enums import EstadoTenant, RolUsuario
 from app.auth.exceptions import (
     CredencialesInvalidasError,
+    CuentaGoogleNoRegistradaError,
+    EnvioDeCorreoFallidoError,
     LimiteDeIntentosError,
     PermisoInsuficienteError,
+    TokenRecuperacionInvalidoError,
 )
 from app.auth.models.tenant_model import Tenant
 from app.auth.models.usuario_model import Usuario
@@ -25,9 +35,13 @@ from app.auth.repositories.usuario_repository import UsuarioRepository
 from app.auth.schemas.auth_schemas import LoginRequest, RegistroRequest
 from app.auth.schemas.sesion_schema import SesionUsuario
 from app.auth.services.sesion_service import SesionService
+from app.core.config.env_tools import get_or_default, get_or_throw
 from app.core.security.password_hasher import PasswordHasherService
 from app.core.security.token_service import TokenService
 from app.core.valkey.client import increment_with_ttl, valkey_client
+
+TTL_TOKEN_RECUPERACION_SEGUNDOS = 30 * 60
+logger = logging.getLogger("pulso.auth")
 
 # Plan asignado por defecto a todo tenant nuevo hasta que exista billing
 # (Prompt 12) y el tenant elija/pague uno: el más chico, no "sin plan" --
@@ -151,6 +165,90 @@ class AuthService:
             await self.session.commit()
 
         return await self._emitir_tokens(usuario, login_nuevo=True)
+
+    async def login_con_google(self, id_token_google: str) -> AuthResultado:
+        """Atajo de login para una cuenta que ya existe en Pulso -- Google
+        nunca crea tenant ni usuario nuevo: el registro exige nombre del
+        negocio, algo que Google no entrega."""
+
+        try:
+            email = await verificar_id_token(id_token_google)
+        except GoogleTokenInvalidoError as error:
+            raise CredencialesInvalidasError(str(error)) from error
+
+        usuario = await self.usuario_repository.obtener_por_email_global(
+            email.strip().lower()
+        )
+        if usuario is None or not usuario.activo:
+            raise CuentaGoogleNoRegistradaError(
+                "No existe una cuenta con ese correo. Regístrate primero."
+            )
+        return await self._emitir_tokens(usuario, login_nuevo=True)
+
+    def _clave_token_recuperacion(self, token: str) -> str:
+        llave = get_or_throw("AUTH_TOKEN_SECRET").encode()
+        return "reset-password:" + hmac.new(llave, token.encode(), sha256).hexdigest()
+
+    async def solicitar_recuperacion(self, email: str) -> None:
+        """Siempre responde igual exista o no la cuenta -- no se revela por
+        temporización ni por respuesta si un correo está registrado."""
+
+        usuario = await self.usuario_repository.obtener_por_email_global(
+            email.strip().lower()
+        )
+        if usuario is None:
+            return
+
+        token = secrets.token_urlsafe(32)
+        await valkey_client.set(
+            self._clave_token_recuperacion(token),
+            str(usuario.id),
+            ex=TTL_TOKEN_RECUPERACION_SEGUNDOS,
+        )
+        frontend_url = get_or_default("FRONTEND_URL", "http://localhost:5173")
+        enlace = f"{frontend_url}/restablecer-password?token={token}"
+        try:
+            await enviar_email(
+                destinatario=usuario.email,
+                asunto="Recupera el acceso a tu cuenta de Pulso",
+                html=(
+                    f"<p>Entra a este enlace para elegir una nueva contraseña. "
+                    f"Vence en 30 minutos.</p><p><a href='{enlace}'>{enlace}</a></p>"
+                ),
+                idempotency_key=f"reset-password:{usuario.id}:{token[:8]}",
+            )
+        except httpx.HTTPError:
+            # Nunca el detalle crudo del proveedor (ej. "dominio no
+            # verificado") hacia el cliente -- y sin CORS, una excepción sin
+            # capturar aquí no llega como error legible al navegador, llega
+            # como un fallo de CORS opaco (el error handler por defecto de
+            # Starlette corre fuera del middleware de CORS).
+            logger.exception(
+                "no se pudo enviar el correo de recuperación (usuario_id=%s)",
+                usuario.id,
+            )
+            raise EnvioDeCorreoFallidoError(
+                "No se pudo enviar el correo. Intenta más tarde."
+            ) from None
+
+    async def restablecer_password(self, token: str, nueva_password: str) -> None:
+        clave = self._clave_token_recuperacion(token)
+        usuario_id = await valkey_client.get(clave)
+        if usuario_id is None:
+            raise TokenRecuperacionInvalidoError(
+                "El enlace de recuperación es inválido o ya venció."
+            )
+
+        usuario = await self.usuario_repository.obtener_por_id_global(int(usuario_id))
+        if usuario is None:
+            raise TokenRecuperacionInvalidoError(
+                "El enlace de recuperación es inválido o ya venció."
+            )
+
+        usuario.password_hash = self.password_hasher.hash_password(nueva_password)
+        await self.usuario_repository.update(usuario)
+        await self.session.commit()
+        await valkey_client.delete(clave)
 
     async def refrescar(self, refresh_token: str) -> AuthResultado:
         payload = self.token_service.verificar_refresh_token_jwt(refresh_token)
