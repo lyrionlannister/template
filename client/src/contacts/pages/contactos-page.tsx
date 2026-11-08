@@ -32,6 +32,28 @@ const inicialesDe = (email: string): string => email.slice(0, 2).toUpperCase();
 
 const formatFechaHora = (iso: string): string => new Date(iso).toLocaleDateString("es-CO");
 
+const CHIPS_VISIBLES = 3;
+
+const VariableChips: FC<{ variables: Record<string, unknown> }> = ({ variables }) => {
+  const entradas = Object.entries(variables);
+  if (entradas.length === 0) return <span className="text-ink-3 text-xs">—</span>;
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {entradas.slice(0, CHIPS_VISIBLES).map(([clave, valor]) => (
+        <span
+          key={clave}
+          className="inline-flex items-center gap-1 text-xs bg-surface-2 border border-border rounded-full px-2 py-0.5"
+        >
+          <span className="font-mono text-ink-3">{clave}</span>=<b>{String(valor)}</b>
+        </span>
+      ))}
+      {entradas.length > CHIPS_VISIBLES && (
+        <span className="text-ink-3 text-xs">+{entradas.length - CHIPS_VISIBLES} más</span>
+      )}
+    </div>
+  );
+};
+
 export const ContactosPage: FC = () => {
   const navigate = useNavigate();
   const { obtenerSesionActual } = useAuth();
@@ -195,9 +217,10 @@ export const ContactosPage: FC = () => {
                   className="border border-border rounded-md p-3.5 text-left"
                 >
                   <div className="font-semibold">{contacto.telefono}</div>
-                  <div className="text-ink-3 text-xs mt-1">
-                    {Object.keys(contacto.variables).length} variables · {formatFechaHora(contacto.creadoEn)}
+                  <div className="mt-1.5">
+                    <VariableChips variables={contacto.variables} />
                   </div>
+                  <div className="text-ink-3 text-xs mt-1.5">{formatFechaHora(contacto.creadoEn)}</div>
                 </button>
               ))}
             </div>
@@ -219,7 +242,9 @@ export const ContactosPage: FC = () => {
                       className="cursor-pointer hover:bg-surface-2"
                     >
                       <TableCell>{contacto.telefono}</TableCell>
-                      <TableCell>{Object.keys(contacto.variables).length}</TableCell>
+                      <TableCell>
+                        <VariableChips variables={contacto.variables} />
+                      </TableCell>
                       <TableCell>{formatFechaHora(contacto.creadoEn)}</TableCell>
                     </tr>
                   ))}
