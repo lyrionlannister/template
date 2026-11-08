@@ -455,6 +455,72 @@ async def test_obtener_contacto_inexistente_da_404(
         await _limpiar(email, usuario_id)
 
 
+async def test_recursos_de_importacion_y_contactos_no_cruzan_tenants(capsys) -> None:
+    """Autorización cruzada: el tenant B no puede leer el estado, los
+    rechazos, el contacto ni los conflictos que pertenecen al tenant A,
+    aunque conozca sus `public_id` exactos."""
+
+    transporte = ASGITransport(app=app)
+    email_a = _email_de_prueba()
+    email_b = _email_de_prueba()
+    usuario_a = None
+    usuario_b = None
+    try:
+        async with AsyncClient(
+            transport=transporte, base_url="https://test"
+        ) as cliente_a:
+            usuario_a = await _registrar_y_verificar_mfa(cliente_a, email_a, capsys)
+
+            contenido = b"telefono,nombre\n+573001112233,Ana\nnumero-invalido,Pedro\n"
+            previsualizacion = await cliente_a.post(
+                "/contacts/importaciones/previsualizar",
+                files={"archivo": ("contactos.csv", contenido, "text/csv")},
+            )
+            preview_id = previsualizacion.json()["previewId"]
+            confirmacion = await cliente_a.post(
+                "/contacts/importaciones",
+                json={
+                    "previewId": preview_id,
+                    "columnaTelefono": "telefono",
+                    "mapeoVariables": {"nombre": "nombre"},
+                },
+            )
+            importacion_public_id = confirmacion.json()["publicId"]
+
+            listado = await cliente_a.get("/contacts/contactos")
+            contacto_public_id = listado.json()["contactos"][0]["publicId"]
+
+        await valkey_client.delete("ratelimit:auth:127.0.0.1")
+        async with AsyncClient(
+            transport=transporte, base_url="https://test"
+        ) as cliente_b:
+            usuario_b = await _registrar_y_verificar_mfa(cliente_b, email_b, capsys)
+
+            estado = await cliente_b.get(
+                f"/contacts/importaciones/{importacion_public_id}"
+            )
+            assert estado.status_code == 404, estado.text
+
+            rechazos = await cliente_b.get(
+                f"/contacts/importaciones/{importacion_public_id}/rechazos"
+            )
+            assert rechazos.status_code == 404, rechazos.text
+
+            contacto = await cliente_b.get(f"/contacts/contactos/{contacto_public_id}")
+            assert contacto.status_code == 404, contacto.text
+
+            conflictos = await cliente_b.get(
+                f"/contacts/contactos/{contacto_public_id}/conflictos"
+            )
+            assert conflictos.status_code == 404, conflictos.text
+
+            listado_b = await cliente_b.get("/contacts/contactos")
+            assert listado_b.json()["total"] == 0
+    finally:
+        await _limpiar(email_a, usuario_a)
+        await _limpiar(email_b, usuario_b)
+
+
 async def test_previsualizar_rechaza_formato_no_soportado(
     cliente: AsyncClient, capsys
 ) -> None:

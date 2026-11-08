@@ -150,3 +150,39 @@ async def test_telefono_sin_codigo_de_pais_se_rechaza_con_motivo_exacto() -> Non
     assert importacion.filas_rechazadas == 1
     assert rechazo.motivo == MOTIVO_SIN_CODIGO_PAIS
     assert rechazo.fila_cruda == {"telefono": "3001112233", "nombre": "Ana"}
+
+
+async def test_valor_de_variable_con_pinta_de_formula_se_neutraliza() -> None:
+    """OWASP (inyección por fórmulas en CSV/XLSX): un valor de variable que
+    empieza como fórmula de hoja de cálculo nunca se guarda tal cual --
+    `neutralize_formulas` nunca se aplica al teléfono (ver su docstring),
+    así que aquí se verifica también que un E.164 real no se corrompe."""
+
+    plan_id = await _crear_plan()
+    tenant_id = await _crear_tenant(plan_id)
+    importacion_id = await _crear_importacion(tenant_id, total_filas=1)
+
+    await procesar_importacion_en_segundo_plano(
+        tenant_id,
+        importacion_id,
+        [{"telefono": "+573001112233", "nombre": "=cmd|'/c calc'!A1"}],
+        "telefono",
+        {"nombre": "nombre"},
+    )
+
+    async with async_session_factory() as session:
+        with set_current_tenant(tenant_id):
+            contacto = (
+                (
+                    await session.execute(
+                        select(Contacto).where(
+                            Contacto.tenant_id == tenant_id,
+                            Contacto.telefono == "+573001112233",
+                        )
+                    )
+                )
+                .scalars()
+                .one()
+            )
+
+    assert contacto.variables == {"nombre": "'=cmd|'/c calc'!A1"}

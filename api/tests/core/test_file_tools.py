@@ -69,10 +69,12 @@ def test_read_tabular_no_corrompe_telefono_e164() -> None:
     assert filas[0]["nombre"] == "=cmd|'/c calc'!A1"
 
 
+def test_neutralize_formulas_neutraliza_formula() -> None:
+    assert neutralize_formulas("=HACK()") == "'=HACK()"
+
+
 def test_neutralize_formulas_no_toca_texto_normal() -> None:
-    df = pl.DataFrame({"nombre": ["Ana", "=HACK()"]})
-    resultado = neutralize_formulas(df)
-    assert resultado["nombre"].to_list() == ["Ana", "'=HACK()"]
+    assert neutralize_formulas("Ana") == "Ana"
 
 
 async def test_read_within_limit_corta_sin_bufferear_todo() -> None:

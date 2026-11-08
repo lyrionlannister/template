@@ -16,12 +16,13 @@ la columna de teléfono de forma automática corrompería todos los
 números."""
 
 import io
+import re
 from typing import Literal
 
 import polars as pl
 from fastapi import UploadFile
 
-_FORMULA_START = r"^[=+\-@\t\r]"
+_FORMULA_START = re.compile(r"^[=+\-@\t\r]")
 _TAMANO_BLOQUE = 1024 * 1024
 
 
@@ -51,23 +52,16 @@ async def read_within_limit(archivo: UploadFile, max_bytes: int) -> bytes:
     return bytes(leido)
 
 
-def neutralize_formulas(df: pl.DataFrame) -> pl.DataFrame:
-    """Prefija `'` a toda celda de texto que empiece como fórmula de
-    hoja de cálculo, para que un valor importado nunca se ejecute como
-    código si el dato se vuelve a abrir en Excel/Sheets más adelante."""
+def neutralize_formulas(valor: str) -> str:
+    """Prefija `'` a un valor que empiece como fórmula de hoja de cálculo,
+    para que un valor importado nunca se ejecute como código si el dato se
+    vuelve a abrir en Excel/Sheets más adelante. Recibe un valor ya
+    aislado (no una columna completa) porque solo quien construye el JSON
+    de variables de un contacto sabe, fila por fila, qué valor no es el
+    teléfono -- aplicarla por columna completa, antes de ese punto,
+    corrompería cualquier E.164 válido (ver docstring de `read_tabular`)."""
 
-    columnas_texto = [nombre for nombre, tipo in df.schema.items() if tipo == pl.String]
-    if not columnas_texto:
-        return df
-    return df.with_columns(
-        [
-            pl.when(pl.col(c).str.contains(_FORMULA_START))
-            .then(pl.lit("'") + pl.col(c))
-            .otherwise(pl.col(c))
-            .alias(c)
-            for c in columnas_texto
-        ]
-    )
+    return f"'{valor}" if _FORMULA_START.match(valor) else valor
 
 
 def tipo_real_coincide(

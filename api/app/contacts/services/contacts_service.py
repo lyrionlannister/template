@@ -60,6 +60,7 @@ from app.contacts.utils.telefono_utils import normalizar_telefono_e164
 from app.core.database.session import async_session_factory
 from app.core.database.tenant_context import set_current_tenant
 from app.core.tools.file_tools import (
+    neutralize_formulas,
     read_tabular,
     read_within_limit,
     tipo_real_coincide,
@@ -492,7 +493,9 @@ async def procesar_importacion_en_segundo_plano(
                         rechazadas += 1
                     else:
                         variables_nuevas = {
-                            nombre_variable: fila.get(columna_origen, "")
+                            nombre_variable: neutralize_formulas(
+                                fila.get(columna_origen, "")
+                            )
                             for columna_origen, nombre_variable in (
                                 mapeo_variables.items()
                             )
