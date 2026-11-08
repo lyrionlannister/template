@@ -21,8 +21,12 @@ if config.config_file_name is not None:
 
 # La URL real viene de la configuración tipada (variables de entorno), nunca
 # del valor placeholder de alembic.ini: ese archivo sí se versiona.
+# `%%` escapa el `%` para el ConfigParser de alembic.ini (interpolación de
+# estilo printf) -- una password con caracteres especiales (ej. `*`) se
+# percent-encodea en la URL y, sin escapar, rompe `set_main_option`.
 config.set_main_option(
-    "sqlalchemy.url", db_config.url_connection.render_as_string(hide_password=False)
+    "sqlalchemy.url",
+    db_config.url_connection.render_as_string(hide_password=False).replace("%", "%%"),
 )
 
 target_metadata = Base.metadata
