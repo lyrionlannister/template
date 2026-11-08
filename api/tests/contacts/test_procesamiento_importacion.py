@@ -6,6 +6,7 @@ importación queda con sus contadores y su estado final correctos."""
 import uuid
 from datetime import UTC, datetime, timedelta
 
+import pytest
 from sqlalchemy import select
 
 from app.app_platform.models.plan_model import Plan
@@ -186,3 +187,31 @@ async def test_valor_de_variable_con_pinta_de_formula_se_neutraliza() -> None:
             )
 
     assert contacto.variables == {"nombre": "'=cmd|'/c calc'!A1"}
+
+
+async def test_fallo_interno_marca_motivo_generico_sin_exponer_el_error_real() -> None:
+    """OWASP (errores genéricos hacia fuera): un fallo interno inesperado
+    nunca expone su texto crudo al tenant -- el detalle real va solo al
+    log (`logger.exception`), nunca a `ImportacionContacto.motivo_fallo`."""
+
+    plan_id = await _crear_plan()
+    tenant_id = await _crear_tenant(plan_id)
+    importacion_id = await _crear_importacion(tenant_id, total_filas=1)
+
+    with pytest.raises(AttributeError):
+        await procesar_importacion_en_segundo_plano(
+            tenant_id,
+            importacion_id,
+            [None],  # fila que no es un dict: dispara un fallo interno real, sin mocks
+            "telefono",
+            {"nombre": "nombre"},
+        )
+
+    async with async_session_factory() as session:
+        with set_current_tenant(tenant_id):
+            importacion = await session.get(ImportacionContacto, importacion_id)
+
+    assert importacion.estado == EstadoImportacion.fallida
+    assert importacion.motivo_fallo is not None
+    assert "AttributeError" not in importacion.motivo_fallo
+    assert "None" not in importacion.motivo_fallo

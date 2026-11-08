@@ -2,6 +2,7 @@
 archivos CSV/XLSX/Parquet."""
 
 import json
+import logging
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
@@ -67,7 +68,13 @@ from app.core.tools.file_tools import (
 )
 from app.core.valkey.client import valkey_client
 
+logger = logging.getLogger("pulso.contacts")
+
 _CLAVE_IMPORTACION_TAMANO_MAXIMO_MB = "importacion_tamano_maximo_mb"
+_MOTIVO_FALLO_GENERICO = (
+    "La importación falló por un error interno. Revisa el archivo e inténtalo "
+    "de nuevo; si el problema persiste, contacta a soporte."
+)
 _PREVIEW_TTL_SEGUNDOS = 30 * 60
 _MUESTRA_FILAS = 20
 _EXTENSIONES_SOPORTADAS = {"csv": "csv", "xlsx": "xlsx", "parquet": "parquet"}
@@ -538,9 +545,14 @@ async def procesar_importacion_en_segundo_plano(
                 importacion.estado = EstadoImportacion.completada
                 await importacion_repository.update(importacion)
                 await session.commit()
-            except Exception as error:
+            except Exception:
+                logger.exception(
+                    "importación de contactos fallida (importacion_id=%s, tenant_id=%s)",
+                    importacion_id,
+                    tenant_id,
+                )
                 importacion.estado = EstadoImportacion.fallida
-                importacion.motivo_fallo = str(error)[:500]
+                importacion.motivo_fallo = _MOTIVO_FALLO_GENERICO
                 await importacion_repository.update(importacion)
                 await session.commit()
                 raise
