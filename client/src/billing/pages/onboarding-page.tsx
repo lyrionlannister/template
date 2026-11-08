@@ -8,6 +8,7 @@ import { AppShell } from "../../ui/components/app-shell";
 import { Button } from "../../ui/components/button";
 import { Field } from "../../ui/components/field";
 import { Input } from "../../ui/components/input";
+import { SecureStrip } from "../../ui/components/secure-strip";
 import { Spinner } from "../../ui/components/spinner";
 import { useBilling } from "../hooks/use-billing";
 import { useWompiTokenizacion } from "../hooks/use-wompi-tokenizacion";
@@ -188,6 +189,10 @@ export const OnboardingPage: FC = () => {
                 required
               />
             </Field>
+
+            <div className="mb-4.5">
+              <SecureStrip />
+            </div>
 
             <label className="flex items-start gap-2.5 text-sm text-ink-2 mb-3 min-h-11">
               <input
