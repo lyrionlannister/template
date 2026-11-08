@@ -333,6 +333,69 @@ async def test_confirmar_importacion_rechaza_columna_telefono_inexistente(
         await _limpiar(email, usuario_id)
 
 
+async def test_estado_y_rechazos_de_importacion_tras_procesarse(
+    cliente: AsyncClient, capsys
+) -> None:
+    """El `BackgroundTask` corre dentro de la misma llamada ASGI (no hay
+    loop de servidor real en el test), así que para cuando el cliente
+    recibe la respuesta del `GET` el procesamiento ya terminó."""
+
+    email = _email_de_prueba()
+    usuario_id = None
+    try:
+        usuario_id = await _registrar_y_verificar_mfa(cliente, email, capsys)
+
+        contenido = b"telefono,nombre\n+573001112233,Ana\nnumero-invalido,Luis\n"
+        previsualizacion = await cliente.post(
+            "/contacts/importaciones/previsualizar",
+            files={"archivo": ("contactos.csv", contenido, "text/csv")},
+        )
+        preview_id = previsualizacion.json()["previewId"]
+
+        confirmacion = await cliente.post(
+            "/contacts/importaciones",
+            json={
+                "previewId": preview_id,
+                "columnaTelefono": "telefono",
+                "mapeoVariables": {"nombre": "nombre"},
+            },
+        )
+        importacion_public_id = confirmacion.json()["publicId"]
+
+        estado = await cliente.get(f"/contacts/importaciones/{importacion_public_id}")
+        assert estado.status_code == 200, estado.text
+        cuerpo_estado = estado.json()
+        assert cuerpo_estado["estado"] == "completada"
+        assert cuerpo_estado["filasAceptadas"] == 1
+        assert cuerpo_estado["filasRechazadas"] == 1
+
+        rechazos = await cliente.get(
+            f"/contacts/importaciones/{importacion_public_id}/rechazos"
+        )
+        assert rechazos.status_code == 200, rechazos.text
+        cuerpo_rechazos = rechazos.json()
+        assert cuerpo_rechazos["total"] == 1
+        assert cuerpo_rechazos["rechazos"][0]["filaCruda"]["telefono"] == (
+            "numero-invalido"
+        )
+    finally:
+        await _limpiar(email, usuario_id)
+
+
+async def test_estado_de_importacion_inexistente_da_404(
+    cliente: AsyncClient, capsys
+) -> None:
+    email = _email_de_prueba()
+    usuario_id = None
+    try:
+        usuario_id = await _registrar_y_verificar_mfa(cliente, email, capsys)
+
+        respuesta = await cliente.get(f"/contacts/importaciones/{uuid.uuid4()}")
+        assert respuesta.status_code == 404, respuesta.text
+    finally:
+        await _limpiar(email, usuario_id)
+
+
 async def test_previsualizar_rechaza_formato_no_soportado(
     cliente: AsyncClient, capsys
 ) -> None:

@@ -3,7 +3,14 @@ política de conflicto de variables y sus conflictos registrados."""
 
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    HTTPException,
+    Query,
+    UploadFile,
+    status,
+)
 
 from app.app_platform.exceptions import (
     LimiteDePlanError,
@@ -18,6 +25,7 @@ from app.contacts.exceptions import (
     ConflictoYaRevertidoError,
     ContactoNoEncontradoError,
     FormatoArchivoNoSoportadoError,
+    ImportacionNoEncontradaError,
     LimiteDeFilasExcedidoError,
     PrevisualizacionNoEncontradaError,
     TipoDeArchivoNoCoincideError,
@@ -30,8 +38,11 @@ from app.contacts.schemas.configuracion_contactos_schema import (
 )
 from app.contacts.schemas.importacion_contacto_schema import (
     ConfirmarImportacionRequest,
+    ContactoRechazadoRespuesta,
+    EstadoImportacionRespuesta,
     ImportacionContactoRespuesta,
     PrevisualizacionImportacionRespuesta,
+    RechazosPaginadosRespuesta,
 )
 from app.core.tools.file_tools import ArchivoDemasiadoGrandeError
 
@@ -105,6 +116,62 @@ async def confirmar_importacion(
         public_id=importacion.public_id,
         estado=importacion.estado,
         total_filas=importacion.total_filas,
+    )
+
+
+@router.get(
+    "/importaciones/{importacion_public_id}",
+    response_model=EstadoImportacionRespuesta,
+)
+async def obtener_estado_importacion(
+    importacion_public_id: UUID,
+    sesion: SesionActual,
+    service: ContactsServiceDep,
+) -> EstadoImportacionRespuesta:
+    try:
+        importacion = await service.obtener_estado_importacion(importacion_public_id)
+    except ImportacionNoEncontradaError as error:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(error)) from error
+
+    return EstadoImportacionRespuesta(
+        public_id=importacion.public_id,
+        estado=importacion.estado,
+        total_filas=importacion.total_filas,
+        filas_aceptadas=importacion.filas_aceptadas,
+        filas_rechazadas=importacion.filas_rechazadas,
+        filas_con_advertencia=importacion.filas_con_advertencia,
+        motivo_fallo=importacion.motivo_fallo,
+    )
+
+
+@router.get(
+    "/importaciones/{importacion_public_id}/rechazos",
+    response_model=RechazosPaginadosRespuesta,
+)
+async def listar_rechazos_de_importacion(
+    importacion_public_id: UUID,
+    sesion: SesionActual,
+    service: ContactsServiceDep,
+    pagina: int = Query(default=1, ge=1),
+    por_pagina: int = Query(default=20, ge=1, le=200),
+) -> RechazosPaginadosRespuesta:
+    try:
+        rechazos, total = await service.listar_rechazos(
+            importacion_public_id, pagina, por_pagina
+        )
+    except ImportacionNoEncontradaError as error:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(error)) from error
+
+    return RechazosPaginadosRespuesta(
+        rechazos=[
+            ContactoRechazadoRespuesta(
+                fila_cruda=rechazo.fila_cruda, motivo=rechazo.motivo
+            )
+            for rechazo in rechazos
+        ],
+        total=total,
+        pagina=pagina,
+        por_pagina=por_pagina,
     )
 
 

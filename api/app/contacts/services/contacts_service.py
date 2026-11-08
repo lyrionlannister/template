@@ -33,6 +33,7 @@ from app.contacts.exceptions import (
     ConflictoYaRevertidoError,
     ContactoNoEncontradoError,
     FormatoArchivoNoSoportadoError,
+    ImportacionNoEncontradaError,
     LimiteDeFilasExcedidoError,
     PrevisualizacionNoEncontradaError,
     TipoDeArchivoNoCoincideError,
@@ -91,6 +92,7 @@ class ContactsService:
         importacion_repository: ImportacionContactoRepository,
         configuracion_repository: ConfiguracionContactosRepository,
         conflicto_repository: ConflictoVariableRepository,
+        rechazado_repository: ContactoRechazadoRepository,
     ):
         self.session = session
         self.auth_service = auth_service
@@ -100,6 +102,7 @@ class ContactsService:
         self.importacion_repository = importacion_repository
         self.configuracion_repository = configuracion_repository
         self.conflicto_repository = conflicto_repository
+        self.rechazado_repository = rechazado_repository
 
     async def previsualizar(
         self, tenant_id: int, archivo: UploadFile
@@ -206,6 +209,24 @@ class ContactsService:
         )
 
         return importacion
+
+    async def obtener_estado_importacion(self, public_id: UUID) -> ImportacionContacto:
+        importacion = await self.importacion_repository.obtener_por_public_id(public_id)
+        if importacion is None:
+            raise ImportacionNoEncontradaError(
+                "La importación no existe o no pertenece a esta organización."
+            )
+        return importacion
+
+    async def listar_rechazos(
+        self, public_id: UUID, pagina: int, por_pagina: int
+    ) -> tuple[list[ContactoRechazado], int]:
+        importacion = await self.obtener_estado_importacion(public_id)
+        total = await self.rechazado_repository.contar_por_importacion(importacion.id)
+        rechazos = await self.rechazado_repository.listar_por_importacion(
+            importacion.id, por_pagina, (pagina - 1) * por_pagina
+        )
+        return rechazos, total
 
     async def obtener_politica_conflicto(self) -> PoliticaConflictoVariables:
         configuracion = await self.configuracion_repository.obtener()

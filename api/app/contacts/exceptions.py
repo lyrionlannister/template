@@ -44,3 +44,7 @@ class ContactoNoEncontradoError(ValueError):
 class ConflictoYaRevertidoError(ValueError):
     """El conflicto ya fue revertido antes; revertirlo de nuevo pisaría
     el valor que el usuario ya restauró a mano."""
+
+
+class ImportacionNoEncontradaError(ValueError):
+    """La importación no existe o no pertenece a este tenant."""

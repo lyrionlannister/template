@@ -24,3 +24,25 @@ class ImportacionContactoRespuesta(BaseSchema):
     public_id: UUID
     estado: EstadoImportacion
     total_filas: int
+
+
+class EstadoImportacionRespuesta(BaseSchema):
+    public_id: UUID
+    estado: EstadoImportacion
+    total_filas: int
+    filas_aceptadas: int
+    filas_rechazadas: int
+    filas_con_advertencia: int
+    motivo_fallo: str | None
+
+
+class ContactoRechazadoRespuesta(BaseSchema):
+    fila_cruda: dict[str, str]
+    motivo: str
+
+
+class RechazosPaginadosRespuesta(BaseSchema):
+    rechazos: list[ContactoRechazadoRespuesta]
+    total: int
+    pagina: int
+    por_pagina: int

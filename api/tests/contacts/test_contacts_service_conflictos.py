@@ -40,6 +40,9 @@ from app.contacts.repositories.configuracion_contactos_repository import (
 from app.contacts.repositories.conflicto_variable_repository import (
     ConflictoVariableRepository,
 )
+from app.contacts.repositories.contacto_rechazado_repository import (
+    ContactoRechazadoRepository,
+)
 from app.contacts.repositories.contacto_repository import ContactoRepository
 from app.contacts.repositories.importacion_contacto_repository import (
     ImportacionContactoRepository,
@@ -119,6 +122,7 @@ def _crear_service(session) -> ContactsService:
         ImportacionContactoRepository(session),
         ConfiguracionContactosRepository(session),
         ConflictoVariableRepository(session),
+        ContactoRechazadoRepository(session),
     )
 
 
