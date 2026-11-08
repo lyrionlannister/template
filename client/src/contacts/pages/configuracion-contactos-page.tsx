@@ -4,6 +4,7 @@ import { Settings, Users } from "lucide-react";
 import { useAuth } from "../../auth/hooks/use-auth";
 import type { Usuario } from "../../auth/types/usuario";
 import { ApiError } from "../../shared/types/api-error";
+import { cn } from "../../shared/utils/cn";
 import { Alert } from "../../ui/components/alert";
 import { AppShell } from "../../ui/components/app-shell";
 import { Button } from "../../ui/components/button";
@@ -95,7 +96,10 @@ export const ConfiguracionContactosPage: FC = () => {
         </div>
       ) : (
         <div className="bg-surface border border-border rounded-md p-4.75 max-w-xl">
-          <h3 className="text-[15px] font-semibold mb-1">Política de conflicto de variables</h3>
+          <div className="flex items-center gap-2.5 mb-1">
+            <h3 className="text-[15px] font-semibold">Política de conflicto de variables</h3>
+            {guardando && <Spinner />}
+          </div>
           <p className="text-ink-2 text-sm mb-4.5">
             Un conflicto ocurre cuando una importación trae un valor distinto para una variable que el contacto ya
             tenía. Sin importar la política elegida, todo conflicto queda registrado y se puede revertir desde el
@@ -111,7 +115,7 @@ export const ConfiguracionContactosPage: FC = () => {
           )}
 
           {error && (
-            <div className="mb-4.5">
+            <div className="mb-4.5 animate-[toastIn_var(--duration-slow)_var(--ease-spring)]">
               <Alert variant="err" title="No se pudo guardar" onClose={() => setError(null)}>
                 {error}
               </Alert>
@@ -119,7 +123,7 @@ export const ConfiguracionContactosPage: FC = () => {
           )}
 
           {guardadoOk && (
-            <div className="mb-4.5">
+            <div className="mb-4.5 animate-[toastIn_var(--duration-slow)_var(--ease-spring)]">
               <Alert variant="ok" title="Guardado" onClose={() => setGuardadoOk(false)}>
                 La política se actualizó correctamente.
               </Alert>
@@ -127,13 +131,20 @@ export const ConfiguracionContactosPage: FC = () => {
           )}
 
           {politica && (
-            <SelectableCardGroup
-              options={OPCIONES_POLITICA}
-              value={politica}
-              onChange={(valor) => {
-                if (esAdministrador && !guardando) cambiarPolitica(valor as PoliticaConflictoVariables);
-              }}
-            />
+            <div
+              className={cn(
+                "transition-opacity duration-fast ease-out",
+                guardando && "opacity-60 pointer-events-none",
+              )}
+            >
+              <SelectableCardGroup
+                options={OPCIONES_POLITICA}
+                value={politica}
+                onChange={(valor) => {
+                  if (esAdministrador && !guardando) cambiarPolitica(valor as PoliticaConflictoVariables);
+                }}
+              />
+            </div>
           )}
         </div>
       )}
