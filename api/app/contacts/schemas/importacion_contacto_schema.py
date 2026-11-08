@@ -1,5 +1,9 @@
-"""Schemas de previsualización de importaciones de contactos."""
+"""Schemas de previsualización y confirmación de importaciones de
+contactos."""
 
+from uuid import UUID
+
+from app.contacts.enums.contacts_enums import EstadoImportacion
 from app.core.schemas.base_schema import BaseSchema
 
 
@@ -7,4 +11,16 @@ class PrevisualizacionImportacionRespuesta(BaseSchema):
     preview_id: str
     columnas: list[str]
     muestra: list[dict[str, str]]
+    total_filas: int
+
+
+class ConfirmarImportacionRequest(BaseSchema):
+    preview_id: str
+    columna_telefono: str
+    mapeo_variables: dict[str, str]
+
+
+class ImportacionContactoRespuesta(BaseSchema):
+    public_id: UUID
+    estado: EstadoImportacion
     total_filas: int

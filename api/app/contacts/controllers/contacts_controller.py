@@ -3,7 +3,7 @@ política de conflicto de variables y sus conflictos registrados."""
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, status
 
 from app.app_platform.exceptions import (
     LimiteDePlanError,
@@ -13,11 +13,13 @@ from app.auth.dependencies import SesionActual
 from app.auth.exceptions import PermisoInsuficienteError
 from app.contacts.dependencies import ContactsServiceDep
 from app.contacts.exceptions import (
+    ColumnaTelefonoInvalidaError,
     ConflictoNoEncontradoError,
     ConflictoYaRevertidoError,
     ContactoNoEncontradoError,
     FormatoArchivoNoSoportadoError,
     LimiteDeFilasExcedidoError,
+    PrevisualizacionNoEncontradaError,
     TipoDeArchivoNoCoincideError,
 )
 from app.contacts.schemas.configuracion_contactos_schema import (
@@ -27,6 +29,8 @@ from app.contacts.schemas.configuracion_contactos_schema import (
     RevertirConflictoRespuesta,
 )
 from app.contacts.schemas.importacion_contacto_schema import (
+    ConfirmarImportacionRequest,
+    ImportacionContactoRespuesta,
     PrevisualizacionImportacionRespuesta,
 )
 from app.core.tools.file_tools import ArchivoDemasiadoGrandeError
@@ -67,6 +71,40 @@ async def previsualizar_importacion(
         columnas=resultado.columnas,
         muestra=resultado.muestra,
         total_filas=resultado.total_filas,
+    )
+
+
+@router.post(
+    "/importaciones",
+    response_model=ImportacionContactoRespuesta,
+)
+async def confirmar_importacion(
+    body: ConfirmarImportacionRequest,
+    sesion: SesionActual,
+    service: ContactsServiceDep,
+    background_tasks: BackgroundTasks,
+) -> ImportacionContactoRespuesta:
+    try:
+        importacion = await service.confirmar_importacion(
+            sesion.tenant_id,
+            body.preview_id,
+            body.columna_telefono,
+            body.mapeo_variables,
+            background_tasks,
+        )
+    except PrevisualizacionNoEncontradaError as error:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(error)) from error
+    except ColumnaTelefonoInvalidaError as error:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(error)) from error
+    except LimiteDeFilasExcedidoError as error:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)
+        ) from error
+
+    return ImportacionContactoRespuesta(
+        public_id=importacion.public_id,
+        estado=importacion.estado,
+        total_filas=importacion.total_filas,
     )
 
 

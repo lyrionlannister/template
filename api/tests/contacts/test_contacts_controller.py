@@ -251,6 +251,88 @@ async def test_previsualizar_rechaza_archivo_que_excede_limite_del_plan_sin_cach
                 await session.commit()
 
 
+async def test_confirmar_importacion_crea_registro_y_borra_el_preview(
+    cliente: AsyncClient, capsys
+) -> None:
+    email = _email_de_prueba()
+    usuario_id = None
+    try:
+        usuario_id = await _registrar_y_verificar_mfa(cliente, email, capsys)
+
+        previsualizacion = await cliente.post(
+            "/contacts/importaciones/previsualizar",
+            files={
+                "archivo": (
+                    "contactos.csv",
+                    b"telefono,nombre\n+573001112233,Ana\n",
+                    "text/csv",
+                )
+            },
+        )
+        preview_id = previsualizacion.json()["previewId"]
+
+        respuesta = await cliente.post(
+            "/contacts/importaciones",
+            json={
+                "previewId": preview_id,
+                "columnaTelefono": "telefono",
+                "mapeoVariables": {"nombre": "nombre"},
+            },
+        )
+
+        assert respuesta.status_code == 200, respuesta.text
+        cuerpo = respuesta.json()
+        assert cuerpo["estado"] == "pendiente"
+        assert cuerpo["totalFilas"] == 1
+        assert cuerpo["publicId"]
+
+        segunda_confirmacion = await cliente.post(
+            "/contacts/importaciones",
+            json={
+                "previewId": preview_id,
+                "columnaTelefono": "telefono",
+                "mapeoVariables": {"nombre": "nombre"},
+            },
+        )
+        assert segunda_confirmacion.status_code == 404, segunda_confirmacion.text
+    finally:
+        await _limpiar(email, usuario_id)
+
+
+async def test_confirmar_importacion_rechaza_columna_telefono_inexistente(
+    cliente: AsyncClient, capsys
+) -> None:
+    email = _email_de_prueba()
+    usuario_id = None
+    try:
+        usuario_id = await _registrar_y_verificar_mfa(cliente, email, capsys)
+
+        previsualizacion = await cliente.post(
+            "/contacts/importaciones/previsualizar",
+            files={
+                "archivo": (
+                    "contactos.csv",
+                    b"telefono,nombre\n+573001112233,Ana\n",
+                    "text/csv",
+                )
+            },
+        )
+        preview_id = previsualizacion.json()["previewId"]
+
+        respuesta = await cliente.post(
+            "/contacts/importaciones",
+            json={
+                "previewId": preview_id,
+                "columnaTelefono": "columna_que_no_existe",
+                "mapeoVariables": {"nombre": "nombre"},
+            },
+        )
+
+        assert respuesta.status_code == 400, respuesta.text
+    finally:
+        await _limpiar(email, usuario_id)
+
+
 async def test_previsualizar_rechaza_formato_no_soportado(
     cliente: AsyncClient, capsys
 ) -> None:
