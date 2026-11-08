@@ -396,6 +396,65 @@ async def test_estado_de_importacion_inexistente_da_404(
         await _limpiar(email, usuario_id)
 
 
+async def test_listar_y_obtener_contactos_tras_importar(
+    cliente: AsyncClient, capsys
+) -> None:
+    email = _email_de_prueba()
+    usuario_id = None
+    try:
+        usuario_id = await _registrar_y_verificar_mfa(cliente, email, capsys)
+
+        contenido = b"telefono,nombre\n+573001112233,Ana\n+573004445566,Luis\n"
+        previsualizacion = await cliente.post(
+            "/contacts/importaciones/previsualizar",
+            files={"archivo": ("contactos.csv", contenido, "text/csv")},
+        )
+        preview_id = previsualizacion.json()["previewId"]
+        await cliente.post(
+            "/contacts/importaciones",
+            json={
+                "previewId": preview_id,
+                "columnaTelefono": "telefono",
+                "mapeoVariables": {"nombre": "nombre"},
+            },
+        )
+
+        listado = await cliente.get("/contacts/contactos")
+        assert listado.status_code == 200, listado.text
+        cuerpo_listado = listado.json()
+        assert cuerpo_listado["total"] == 2
+        assert len(cuerpo_listado["contactos"]) == 2
+
+        busqueda = await cliente.get(
+            "/contacts/contactos", params={"telefono": "4445566"}
+        )
+        assert busqueda.status_code == 200, busqueda.text
+        cuerpo_busqueda = busqueda.json()
+        assert cuerpo_busqueda["total"] == 1
+        assert cuerpo_busqueda["contactos"][0]["telefono"] == "+573004445566"
+
+        contacto_public_id = cuerpo_busqueda["contactos"][0]["publicId"]
+        detalle = await cliente.get(f"/contacts/contactos/{contacto_public_id}")
+        assert detalle.status_code == 200, detalle.text
+        assert detalle.json()["variables"] == {"nombre": "Luis"}
+    finally:
+        await _limpiar(email, usuario_id)
+
+
+async def test_obtener_contacto_inexistente_da_404(
+    cliente: AsyncClient, capsys
+) -> None:
+    email = _email_de_prueba()
+    usuario_id = None
+    try:
+        usuario_id = await _registrar_y_verificar_mfa(cliente, email, capsys)
+
+        respuesta = await cliente.get(f"/contacts/contactos/{uuid.uuid4()}")
+        assert respuesta.status_code == 404, respuesta.text
+    finally:
+        await _limpiar(email, usuario_id)
+
+
 async def test_previsualizar_rechaza_formato_no_soportado(
     cliente: AsyncClient, capsys
 ) -> None:

@@ -210,6 +210,23 @@ class ContactsService:
 
         return importacion
 
+    async def listar_contactos(
+        self, pagina: int, por_pagina: int, busqueda_telefono: str | None
+    ) -> tuple[list[Contacto], int]:
+        total = await self.contacto_repository.contar(busqueda_telefono)
+        contactos = await self.contacto_repository.listar(
+            por_pagina, (pagina - 1) * por_pagina, busqueda_telefono
+        )
+        return contactos, total
+
+    async def obtener_contacto(self, public_id: UUID) -> Contacto:
+        contacto = await self.contacto_repository.obtener_por_public_id(public_id)
+        if contacto is None:
+            raise ContactoNoEncontradoError(
+                "El contacto no existe o no pertenece a esta organización."
+            )
+        return contacto
+
     async def obtener_estado_importacion(self, public_id: UUID) -> ImportacionContacto:
         importacion = await self.importacion_repository.obtener_por_public_id(public_id)
         if importacion is None:

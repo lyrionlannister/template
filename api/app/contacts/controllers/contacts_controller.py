@@ -36,6 +36,10 @@ from app.contacts.schemas.configuracion_contactos_schema import (
     ConflictoVariableRespuesta,
     RevertirConflictoRespuesta,
 )
+from app.contacts.schemas.contacto_schema import (
+    ContactoRespuesta,
+    ContactosPaginadosRespuesta,
+)
 from app.contacts.schemas.importacion_contacto_schema import (
     ConfirmarImportacionRequest,
     ContactoRechazadoRespuesta,
@@ -172,6 +176,55 @@ async def listar_rechazos_de_importacion(
         total=total,
         pagina=pagina,
         por_pagina=por_pagina,
+    )
+
+
+@router.get(
+    "/contactos",
+    response_model=ContactosPaginadosRespuesta,
+)
+async def listar_contactos(
+    sesion: SesionActual,
+    service: ContactsServiceDep,
+    telefono: str | None = Query(default=None),
+    pagina: int = Query(default=1, ge=1),
+    por_pagina: int = Query(default=20, ge=1, le=200),
+) -> ContactosPaginadosRespuesta:
+    contactos, total = await service.listar_contactos(pagina, por_pagina, telefono)
+    return ContactosPaginadosRespuesta(
+        contactos=[
+            ContactoRespuesta(
+                public_id=contacto.public_id,
+                telefono=contacto.telefono,
+                variables=contacto.variables,
+                creado_en=contacto.creado_en,
+            )
+            for contacto in contactos
+        ],
+        total=total,
+        pagina=pagina,
+        por_pagina=por_pagina,
+    )
+
+
+@router.get(
+    "/contactos/{contacto_public_id}",
+    response_model=ContactoRespuesta,
+)
+async def obtener_contacto(
+    contacto_public_id: UUID,
+    sesion: SesionActual,
+    service: ContactsServiceDep,
+) -> ContactoRespuesta:
+    try:
+        contacto = await service.obtener_contacto(contacto_public_id)
+    except ContactoNoEncontradoError as error:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(error)) from error
+    return ContactoRespuesta(
+        public_id=contacto.public_id,
+        telefono=contacto.telefono,
+        variables=contacto.variables,
+        creado_en=contacto.creado_en,
     )
 
 
