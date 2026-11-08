@@ -1,45 +1,32 @@
 services:
   database:
     build: ./infra/database
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    env_file: ./infra/.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "127.0.0.1:${DB_PORT}:5432"
+      - "127.0.0.1:5432:5432"
 
   valkey:
     build: ./infra/cache
-    command: ["valkey-server", "--requirepass", "${VALKEY_PASSWORD}"]
+    env_file: ./infra/.env
+    command: ["sh", "-c", "valkey-server --requirepass \"$$VALKEY_PASSWORD\""]
     volumes:
       - valkey_data:/data
     ports:
-      - "127.0.0.1:${VALKEY_PORT}:6379"
+      - "127.0.0.1:6379:6379"
 
   api:
     build: ./api
+    env_file: ./api/.env
     environment:
       DB_HOST: database
-      DB_PORT: 5432
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
-      DB_ENGINE: ${DB_ENGINE}
-      DB_DRIVER: ${DB_DRIVER}
       VALKEY_HOST: valkey
-      VALKEY_PORT: 6379
-      VALKEY_PASSWORD: ${VALKEY_PASSWORD}
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
-      ENV: ${ENV}
-      AUTH_TOKEN_SECRET: ${AUTH_TOKEN_SECRET}
-      PASSWORD_PEPPER: ${PASSWORD_PEPPER}
     depends_on:
       - database
       - valkey
     ports:
-      - "127.0.0.1:${API_PORT}:8000"
+      - "127.0.0.1:8000:8000"
 
 volumes:
   postgres_data:
