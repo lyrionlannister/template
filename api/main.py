@@ -16,6 +16,9 @@ from app.app_platform.controllers.plan_controller import router as plan_router
 from app.app_platform.controllers.tipo_cambio_controller import (
     router as tipo_cambio_router,
 )
+from app.audiences.controllers.audiencias_controller import (
+    router as audiences_router,
+)
 from app.auth.controllers.auth_controller import router as auth_router
 from app.billing.controllers.fuente_de_pago_controller import (
     router as fuente_de_pago_router,
@@ -56,6 +59,7 @@ app.include_router(fuente_de_pago_router)
 app.include_router(suscripcion_router)
 app.include_router(saldo_router)
 app.include_router(contacts_router)
+app.include_router(audiences_router)
 
 allowed_origins = get_settings().app.allowed_origins
 

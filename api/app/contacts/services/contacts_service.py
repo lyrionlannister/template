@@ -33,6 +33,7 @@ from app.contacts.exceptions import (
     ConflictoNoEncontradoError,
     ConflictoYaRevertidoError,
     ContactoNoEncontradoError,
+    FiltroInvalidoError,
     FormatoArchivoNoSoportadoError,
     ImportacionNoEncontradaError,
     LimiteDeFilasExcedidoError,
@@ -57,6 +58,7 @@ from app.contacts.repositories.contacto_repository import ContactoRepository
 from app.contacts.repositories.importacion_contacto_repository import (
     ImportacionContactoRepository,
 )
+from app.contacts.schemas.filtro_schema import FiltroAudiencia
 from app.contacts.utils.telefono_utils import normalizar_telefono_e164
 from app.core.database.session import async_session_factory
 from app.core.database.tenant_context import set_current_tenant
@@ -333,6 +335,25 @@ class ContactsService:
         await self.conflicto_repository.update(conflicto)
         await self.session.commit()
         return contacto
+
+    async def listar_claves_variables(self) -> list[str]:
+        """Claves de `variables` que existen hoy entre los contactos del
+        tenant en sesión -- usado por Audiencias para armar el constructor
+        de filtros sin un catálogo fijo (no existe, ver `SPEC-contactos.md`
+        punto 5)."""
+        return await self.contacto_repository.listar_claves_variables()
+
+    async def contar_por_filtro(self, filtro: FiltroAudiencia) -> int:
+        try:
+            return await self.contacto_repository.contar_por_filtro(filtro)
+        except ValueError as error:
+            raise FiltroInvalidoError(str(error)) from error
+
+    async def listar_ids_por_filtro(self, filtro: FiltroAudiencia) -> list[int]:
+        try:
+            return await self.contacto_repository.listar_ids_por_filtro(filtro)
+        except ValueError as error:
+            raise FiltroInvalidoError(str(error)) from error
 
     async def _tamano_maximo_bytes(self) -> int:
         valor_mb = await self.parametro_comercial_service.valor_vigente(

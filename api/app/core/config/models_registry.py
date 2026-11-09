@@ -8,6 +8,10 @@ from app.app_platform.models import (  # noqa: F401
     plan_model,
     tipo_cambio_model,
 )
+from app.audiences.models import (  # noqa: F401
+    audiencia_contacto_model,
+    audiencia_model,
+)
 from app.auth.models import codigo_otp_model, tenant_model, usuario_model  # noqa: F401
 from app.billing.models import (  # noqa: F401
     cobro_model,

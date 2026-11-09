@@ -48,3 +48,9 @@ class ConflictoYaRevertidoError(ValueError):
 
 class ImportacionNoEncontradaError(ValueError):
     """La importación no existe o no pertenece a este tenant."""
+
+
+class FiltroInvalidoError(ValueError):
+    """El filtro pasó la validación de estructura (Pydantic) pero falla al
+    ejecutarse -- hoy el único caso real es una fecha mal formada en
+    `creado_en` (`date.fromisoformat` la rechaza)."""
