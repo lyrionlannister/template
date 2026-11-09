@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FC, type FormEvent } from "react
 import { useNavigate } from "react-router";
 import { RotateCcw, Search, Settings, Upload, Users } from "lucide-react";
 import { useAuth } from "../../auth/hooks/use-auth";
+import type { Plan } from "../../auth/types/plan";
 import type { Usuario } from "../../auth/types/usuario";
 import { ApiError } from "../../shared/types/api-error";
 import { Alert } from "../../ui/components/alert";
@@ -21,14 +22,10 @@ import { useContacts } from "../hooks/use-contacts";
 import type { ConflictoVariable } from "../types/conflicto";
 import type { Contacto } from "../types/contacto";
 
-const NAV_ITEMS = [
-  { label: "Contactos", href: "/contactos", icon: Users },
-  { label: "Ajustes", href: "/ajustes", icon: Settings },
-];
-
 const POR_PAGINA = 20;
 
 const inicialesDe = (email: string): string => email.slice(0, 2).toUpperCase();
+const ROL_LABEL: Record<Usuario["rol"], string> = { administrador: "Administrador", miembro: "Miembro" };
 
 const formatFechaHora = (iso: string): string => new Date(iso).toLocaleDateString("es-CO");
 
@@ -56,10 +53,11 @@ const VariableChips: FC<{ variables: Record<string, unknown> }> = ({ variables }
 
 export const ContactosPage: FC = () => {
   const navigate = useNavigate();
-  const { obtenerSesionActual } = useAuth();
+  const { obtenerSesionActual, obtenerMiPlan, cerrarSesion } = useAuth();
   const { listarContactos, obtenerContacto, listarConflictosDeContacto, revertirConflicto } = useContacts();
 
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [plan, setPlan] = useState<Plan | null>(null);
   const [contactos, setContactos] = useState<Contacto[]>([]);
   const [total, setTotal] = useState(0);
   const [pagina, setPagina] = useState(1);
@@ -89,10 +87,18 @@ export const ContactosPage: FC = () => {
   );
 
   useEffect(() => {
-    obtenerSesionActual()
-      .then(setUsuario)
+    Promise.all([obtenerSesionActual(), obtenerMiPlan()])
+      .then(([sesion, miPlan]) => {
+        setUsuario(sesion);
+        setPlan(miPlan);
+      })
       .catch(() => setUsuario(null));
-  }, [obtenerSesionActual]);
+  }, [obtenerSesionActual, obtenerMiPlan]);
+
+  const salir = async () => {
+    await cerrarSesion();
+    navigate("/login");
+  };
 
   useEffect(() => {
     cargar(1, "");
@@ -138,11 +144,15 @@ export const ContactosPage: FC = () => {
 
   return (
     <AppShell
-      navItems={NAV_ITEMS}
       activeHref="/contactos"
+      pageTitle="Contactos"
       logoLabel="Pulso"
+      tenantNombre={usuario?.tenantNombre ?? ""}
+      planNombre={plan?.nombre ?? ""}
       userName={usuario?.email ?? ""}
       userInitials={usuario ? inicialesDe(usuario.email) : "--"}
+      userRolLabel={usuario ? ROL_LABEL[usuario.rol] : ""}
+      onCerrarSesion={salir}
     >
       <div className="flex items-start justify-between gap-4 flex-wrap mb-5">
         <div>

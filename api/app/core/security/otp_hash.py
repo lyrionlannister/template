@@ -6,10 +6,10 @@ exigido para JWT, no hace falta otro nuevo solo para esto."""
 import hmac
 from hashlib import sha256
 
-from app.core.config.env_tools import get_or_throw
+from app.core.config.settings import get_settings
 
 
 def hash_codigo_otp(usuario_id: int, codigo: str) -> str:
-    llave = get_or_throw("AUTH_TOKEN_SECRET").encode()
+    llave = get_settings().auth.auth_token_secret.get_secret_value().encode()
     mensaje = f"otp:{usuario_id}:{codigo}".encode()
     return hmac.new(llave, mensaje, sha256).hexdigest()

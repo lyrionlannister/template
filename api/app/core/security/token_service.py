@@ -11,7 +11,7 @@ from typing import Any
 
 import jwt
 
-from app.core.config.env_tools import get_or_throw
+from app.core.config.settings import get_settings
 from app.core.valkey.client import valkey_client
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
@@ -29,7 +29,9 @@ class TokenInvalidoError(ValueError):
 
 class TokenService:
     def __init__(self, secret: str | None = None):
-        self._secret = secret or get_or_throw("AUTH_TOKEN_SECRET")
+        self._secret = (
+            secret or get_settings().auth.auth_token_secret.get_secret_value()
+        )
 
     def generar_access_token(self, usuario_id: int, email: str) -> str:
         ahora = datetime.now(UTC)

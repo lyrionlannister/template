@@ -21,7 +21,7 @@ from app.billing.models.cobro_model import Cobro
 from app.billing.models.fuente_de_pago_model import FuenteDePago
 from app.billing.models.suscripcion_model import Suscripcion
 from app.billing.services.suscripcion_service import SuscripcionService
-from app.core.config.env_tools import get_or_throw
+from app.core.config.settings import get_settings
 from app.core.database.session import async_session_factory
 from app.core.database.tenant_context import set_current_tenant
 from app.core.valkey.client import valkey_client
@@ -119,7 +119,11 @@ async def _tokenizar_tarjeta_de_prueba_como_lo_haria_el_navegador() -> str:
                 "exp_year": "30",
                 "card_holder": "Prueba Suscripción",
             },
-            headers={"Authorization": f"Bearer {get_or_throw('WOMPI_PUBLIC_KEY')}"},
+            headers={
+                "Authorization": (
+                    f"Bearer {get_settings().billing.wompi_public_key.get_secret_value()}"
+                )
+            },
         )
         respuesta.raise_for_status()
         return respuesta.json()["data"]["id"]
@@ -128,7 +132,7 @@ async def _tokenizar_tarjeta_de_prueba_como_lo_haria_el_navegador() -> str:
 def _firmar_evento_transaccion_actualizada(
     transaction_id: str, status: str, amount_in_cents: int, timestamp: int
 ) -> dict:
-    secreto = get_or_throw("WOMPI_EVENTS_SECRET")
+    secreto = get_settings().billing.wompi_events_secret.get_secret_value()
     cadena = f"{transaction_id}{status}{amount_in_cents}{timestamp}{secreto}"
     checksum = hashlib.sha256(cadena.encode()).hexdigest()
     return {

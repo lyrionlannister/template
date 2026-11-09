@@ -4,7 +4,7 @@ scaffold seguro por defecto)."""
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from app.core.config.env_tools import get_or_default
+from app.core.config.settings import get_settings
 
 ASGIMessage = dict[str, Any]
 Receive = Callable[[], Awaitable[ASGIMessage]]
@@ -21,7 +21,7 @@ _HSTS = (b"strict-transport-security", b"max-age=63072000; includeSubDomains")
 class SecurityHeadersMiddleware:
     def __init__(self, app) -> None:
         self.app = app
-        self._es_produccion = get_or_default("ENV", "development") == "production"
+        self._es_produccion = get_settings().app.env == "production"
 
     async def __call__(self, scope: dict, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":

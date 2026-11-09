@@ -1,7 +1,7 @@
 import { useEffect, useState, type FC } from "react";
 import { useNavigate } from "react-router";
-import { Settings, Users } from "lucide-react";
 import { useAuth } from "../../auth/hooks/use-auth";
+import type { Plan } from "../../auth/types/plan";
 import type { Usuario } from "../../auth/types/usuario";
 import { ApiError } from "../../shared/types/api-error";
 import { cn } from "../../shared/utils/cn";
@@ -12,11 +12,6 @@ import { SelectableCardGroup } from "../../ui/components/selectable-card-group";
 import { Spinner } from "../../ui/components/spinner";
 import { useContacts } from "../hooks/use-contacts";
 import type { PoliticaConflictoVariables } from "../types/configuracion";
-
-const NAV_ITEMS = [
-  { label: "Contactos", href: "/contactos", icon: Users },
-  { label: "Ajustes", href: "/ajustes", icon: Settings },
-];
 
 const OPCIONES_POLITICA: { value: PoliticaConflictoVariables; label: string; description: string }[] = [
   {
@@ -32,13 +27,15 @@ const OPCIONES_POLITICA: { value: PoliticaConflictoVariables; label: string; des
 ];
 
 const inicialesDe = (email: string): string => email.slice(0, 2).toUpperCase();
+const ROL_LABEL: Record<Usuario["rol"], string> = { administrador: "Administrador", miembro: "Miembro" };
 
 export const ConfiguracionContactosPage: FC = () => {
   const navigate = useNavigate();
-  const { obtenerSesionActual } = useAuth();
+  const { obtenerSesionActual, obtenerMiPlan, cerrarSesion } = useAuth();
   const { obtenerConfiguracion, actualizarConfiguracion } = useContacts();
 
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [plan, setPlan] = useState<Plan | null>(null);
   const [politica, setPolitica] = useState<PoliticaConflictoVariables | null>(null);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
@@ -46,14 +43,20 @@ export const ConfiguracionContactosPage: FC = () => {
   const [guardadoOk, setGuardadoOk] = useState(false);
 
   useEffect(() => {
-    Promise.all([obtenerSesionActual(), obtenerConfiguracion()])
-      .then(([sesion, configuracion]) => {
+    Promise.all([obtenerSesionActual(), obtenerMiPlan(), obtenerConfiguracion()])
+      .then(([sesion, miPlan, configuracion]) => {
         setUsuario(sesion);
+        setPlan(miPlan);
         setPolitica(configuracion.politicaConflictoVariables);
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : "No se pudo cargar la configuración."))
       .finally(() => setCargando(false));
-  }, [obtenerSesionActual, obtenerConfiguracion]);
+  }, [obtenerSesionActual, obtenerMiPlan, obtenerConfiguracion]);
+
+  const salir = async () => {
+    await cerrarSesion();
+    navigate("/login");
+  };
 
   const esAdministrador = usuario?.rol === "administrador";
 
@@ -74,11 +77,15 @@ export const ConfiguracionContactosPage: FC = () => {
 
   return (
     <AppShell
-      navItems={NAV_ITEMS}
       activeHref="/contactos"
+      pageTitle="Configuración"
       logoLabel="Pulso"
+      tenantNombre={usuario?.tenantNombre ?? ""}
+      planNombre={plan?.nombre ?? ""}
       userName={usuario?.email ?? ""}
       userInitials={usuario ? inicialesDe(usuario.email) : "--"}
+      userRolLabel={usuario ? ROL_LABEL[usuario.rol] : ""}
+      onCerrarSesion={salir}
     >
       <div className="flex items-start justify-between gap-4 flex-wrap mb-5">
         <div>

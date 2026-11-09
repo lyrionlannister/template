@@ -5,4 +5,5 @@ export interface Usuario {
   email: string;
   rol: RolUsuario;
   mfaHabilitado: boolean;
+  tenantNombre: string;
 }

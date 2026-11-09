@@ -1,17 +1,14 @@
 import type { ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
-
-export interface AppShellNavItem {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-}
 
 export interface AppShellProps {
-  navItems: AppShellNavItem[];
   activeHref: string;
+  pageTitle: string;
   logoLabel: string;
+  tenantNombre: string;
+  planNombre: string;
   userName: string;
   userInitials: string;
+  userRolLabel: string;
+  onCerrarSesion: () => void;
   children: ReactNode;
 }

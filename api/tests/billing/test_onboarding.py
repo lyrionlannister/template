@@ -31,7 +31,7 @@ from sqlalchemy import delete, select
 from app.auth.models.codigo_otp_model import CodigoOtp
 from app.auth.models.tenant_model import Tenant
 from app.auth.models.usuario_model import Usuario
-from app.core.config.env_tools import get_or_throw
+from app.core.config.settings import get_settings
 from app.core.database.session import async_session_factory
 from app.core.valkey.client import valkey_client
 from main import app
@@ -148,7 +148,11 @@ async def _tokenizar_tarjeta_de_prueba_como_lo_haria_el_navegador() -> str:
                 "exp_year": "30",
                 "card_holder": "Prueba Onboarding",
             },
-            headers={"Authorization": f"Bearer {get_or_throw('WOMPI_PUBLIC_KEY')}"},
+            headers={
+                "Authorization": (
+                    f"Bearer {get_settings().billing.wompi_public_key.get_secret_value()}"
+                )
+            },
         )
         respuesta.raise_for_status()
         return respuesta.json()["data"]["id"]
@@ -157,7 +161,7 @@ async def _tokenizar_tarjeta_de_prueba_como_lo_haria_el_navegador() -> str:
 def _firmar_evento_transaccion_actualizada(
     transaction_id: str, status: str, amount_in_cents: int, timestamp: int
 ) -> dict:
-    secreto = get_or_throw("WOMPI_EVENTS_SECRET")
+    secreto = get_settings().billing.wompi_events_secret.get_secret_value()
     cadena = f"{transaction_id}{status}{amount_in_cents}{timestamp}{secreto}"
     checksum = hashlib.sha256(cadena.encode()).hexdigest()
     return {

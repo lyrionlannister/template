@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type FC } from "react";
 import { useNavigate } from "react-router";
-import { AlertTriangle, CheckCircle2, Settings, Users } from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useAuth } from "../../auth/hooks/use-auth";
+import type { Plan } from "../../auth/types/plan";
 import type { Usuario } from "../../auth/types/usuario";
 import { ApiError } from "../../shared/types/api-error";
 import { Alert } from "../../ui/components/alert";
@@ -19,27 +20,24 @@ import { TableHeadCell } from "../../ui/components/table-head-cell";
 import { useContacts } from "../hooks/use-contacts";
 import type { ContactoRechazado, EstadoImportacionDetalle, PrevisualizacionImportacion } from "../types/importacion";
 
-const NAV_ITEMS = [
-  { label: "Contactos", href: "/contactos", icon: Users },
-  { label: "Ajustes", href: "/ajustes", icon: Settings },
-];
-
 const PASOS = [{ label: "Subir archivo" }, { label: "Mapear columnas" }, { label: "Resultado" }];
 const INTERVALO_POLLING_MS = 1500;
 const RECHAZOS_POR_PAGINA = 20;
 
 const inicialesDe = (email: string): string => email.slice(0, 2).toUpperCase();
+const ROL_LABEL: Record<Usuario["rol"], string> = { administrador: "Administrador", miembro: "Miembro" };
 
 const adivinarColumnaTelefono = (columnas: string[]): string =>
   columnas.find((columna) => columna.toLowerCase().includes("telefono")) ?? columnas[0] ?? "";
 
 export const ImportarContactosPage: FC = () => {
   const navigate = useNavigate();
-  const { obtenerSesionActual } = useAuth();
+  const { obtenerSesionActual, obtenerMiPlan, cerrarSesion } = useAuth();
   const { previsualizarImportacion, confirmarImportacion, obtenerEstadoImportacion, listarRechazosDeImportacion } =
     useContacts();
 
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [plan, setPlan] = useState<Plan | null>(null);
   const [paso, setPaso] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,10 +53,18 @@ export const ImportarContactosPage: FC = () => {
   const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    obtenerSesionActual()
-      .then(setUsuario)
+    Promise.all([obtenerSesionActual(), obtenerMiPlan()])
+      .then(([sesion, miPlan]) => {
+        setUsuario(sesion);
+        setPlan(miPlan);
+      })
       .catch(() => setUsuario(null));
-  }, [obtenerSesionActual]);
+  }, [obtenerSesionActual, obtenerMiPlan]);
+
+  const salir = async () => {
+    await cerrarSesion();
+    navigate("/login");
+  };
 
   useEffect(() => () => {
     if (pollingRef.current) clearTimeout(pollingRef.current);
@@ -141,11 +147,15 @@ export const ImportarContactosPage: FC = () => {
 
   return (
     <AppShell
-      navItems={NAV_ITEMS}
       activeHref="/contactos"
+      pageTitle="Importar"
       logoLabel="Pulso"
+      tenantNombre={usuario?.tenantNombre ?? ""}
+      planNombre={plan?.nombre ?? ""}
       userName={usuario?.email ?? ""}
       userInitials={usuario ? inicialesDe(usuario.email) : "--"}
+      userRolLabel={usuario ? ROL_LABEL[usuario.rol] : ""}
+      onCerrarSesion={salir}
     >
       <div className="flex items-start justify-between gap-4 flex-wrap mb-5">
         <div>

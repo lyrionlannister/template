@@ -21,7 +21,7 @@ from app.auth.exceptions import (
 )
 from app.auth.models.codigo_otp_model import CodigoOtp
 from app.auth.repositories.codigo_otp_repository import CodigoOtpRepository
-from app.core.config.env_tools import get_or_default
+from app.core.config.settings import get_settings
 from app.core.security.otp_hash import hash_codigo_otp
 from app.core.valkey.client import increment_with_ttl, valkey_client
 
@@ -57,7 +57,7 @@ class OtpService:
         await self._despachar(usuario_id, canal, codigo)
 
     async def _despachar(self, usuario_id: int, canal: CanalOtp, codigo: str) -> None:
-        if get_or_default("ENV", "development") == "development":
+        if get_settings().app.env == "development":
             print(
                 f"[otp-dev] usuario_id={usuario_id} canal={canal.value} codigo={codigo}"
             )

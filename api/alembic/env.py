@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 from app.core.config import models_registry  # noqa: F401
-from app.core.config.database_config import db_config
+from app.core.config.settings import get_settings
 from app.core.database.base import Base
 
 # this is the Alembic Config object, which provides
@@ -26,7 +26,9 @@ if config.config_file_name is not None:
 # percent-encodea en la URL y, sin escapar, rompe `set_main_option`.
 config.set_main_option(
     "sqlalchemy.url",
-    db_config.url_connection.render_as_string(hide_password=False).replace("%", "%%"),
+    get_settings()
+    .database.url_connection.render_as_string(hide_password=False)
+    .replace("%", "%%"),
 )
 
 target_metadata = Base.metadata

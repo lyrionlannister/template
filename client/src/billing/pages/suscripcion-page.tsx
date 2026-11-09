@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type FC, type FormEvent } from "react";
-import { CreditCard, RefreshCw, Settings, Users } from "lucide-react";
+import { useNavigate } from "react-router";
+import { CreditCard, RefreshCw } from "lucide-react";
 import { useAuth } from "../../auth/hooks/use-auth";
+import type { Plan } from "../../auth/types/plan";
 import type { Usuario } from "../../auth/types/usuario";
 import { formatCop } from "../../shared/utils/format-cop";
 import { formatFecha } from "../../shared/utils/format-fecha";
@@ -19,23 +21,21 @@ import { useWompiTokenizacion } from "../hooks/use-wompi-tokenizacion";
 import type { TokensDeAceptacion } from "../types/fuente-de-pago";
 import type { SuscripcionEstado } from "../types/suscripcion-estado";
 
-const NAV_ITEMS = [
-  { label: "Contactos", href: "/contactos", icon: Users },
-  { label: "Ajustes", href: "/ajustes", icon: Settings },
-];
-
 const inicialesDe = (email: string): string => email.slice(0, 2).toUpperCase();
+const ROL_LABEL: Record<Usuario["rol"], string> = { administrador: "Administrador", miembro: "Miembro" };
 
 const INTERVALO_POLLING_MS = 2500;
 const MAX_INTENTOS_POLLING = 40;
 
 export const SuscripcionPage: FC = () => {
-  const { obtenerSesionActual } = useAuth();
+  const { obtenerSesionActual, obtenerMiPlan, cerrarSesion } = useAuth();
   const { obtenerTokensDeAceptacion, iniciarFuenteDePago, consultarEstadoFuenteDePago, obtenerEstadoSuscripcion } =
     useBilling();
   const { tokenizarTarjeta } = useWompiTokenizacion();
+  const navigate = useNavigate();
 
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [plan, setPlan] = useState<Plan | null>(null);
   const [suscripcion, setSuscripcion] = useState<SuscripcionEstado | null>(null);
   const [tokens, setTokens] = useState<TokensDeAceptacion | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -58,9 +58,15 @@ export const SuscripcionPage: FC = () => {
 
   const cargarTodo = useCallback(() => {
     setCargando(true);
-    return Promise.all([obtenerSesionActual(), obtenerEstadoSuscripcion(), obtenerTokensDeAceptacion()])
-      .then(([sesion, estadoActual, tokensDeAceptacion]) => {
+    return Promise.all([
+      obtenerSesionActual(),
+      obtenerMiPlan(),
+      obtenerEstadoSuscripcion(),
+      obtenerTokensDeAceptacion(),
+    ])
+      .then(([sesion, miPlan, estadoActual, tokensDeAceptacion]) => {
         setUsuario(sesion);
+        setPlan(miPlan);
         setSuscripcion(estadoActual);
         setTokens(tokensDeAceptacion);
       })
@@ -68,11 +74,16 @@ export const SuscripcionPage: FC = () => {
         setErrorCarga(err instanceof Error ? err.message : "No se pudo cargar la suscripción."),
       )
       .finally(() => setCargando(false));
-  }, [obtenerSesionActual, obtenerEstadoSuscripcion, obtenerTokensDeAceptacion]);
+  }, [obtenerSesionActual, obtenerMiPlan, obtenerEstadoSuscripcion, obtenerTokensDeAceptacion]);
 
   useEffect(() => {
     cargarTodo();
   }, [cargarTodo]);
+
+  const salir = async () => {
+    await cerrarSesion();
+    navigate("/login");
+  };
 
   const pollearEstado = useCallback(
     async (publicId: string) => {
@@ -145,11 +156,15 @@ export const SuscripcionPage: FC = () => {
 
   return (
     <AppShell
-      navItems={NAV_ITEMS}
-      activeHref="/ajustes"
+      activeHref="/suscripcion"
+      pageTitle="Suscripción"
       logoLabel="Pulso"
+      tenantNombre={usuario?.tenantNombre ?? ""}
+      planNombre={plan?.nombre ?? ""}
       userName={usuario?.email ?? ""}
       userInitials={usuario ? inicialesDe(usuario.email) : "--"}
+      userRolLabel={usuario ? ROL_LABEL[usuario.rol] : ""}
+      onCerrarSesion={salir}
     >
       <div className="mb-5">
         <h1 className="text-[22px] mb-1">Suscripción</h1>

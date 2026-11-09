@@ -68,3 +68,4 @@ class UsuarioRespuesta(BaseSchema):
     email: str
     rol: RolUsuario
     mfa_habilitado: bool
+    tenant_nombre: str

@@ -35,7 +35,7 @@ from app.auth.repositories.usuario_repository import UsuarioRepository
 from app.auth.schemas.auth_schemas import LoginRequest, RegistroRequest
 from app.auth.schemas.sesion_schema import SesionUsuario
 from app.auth.services.sesion_service import SesionService
-from app.core.config.env_tools import get_or_default, get_or_throw
+from app.core.config.settings import get_settings
 from app.core.security.password_hasher import PasswordHasherService
 from app.core.security.token_service import TokenService
 from app.core.valkey.client import increment_with_ttl, valkey_client
@@ -186,7 +186,7 @@ class AuthService:
         return await self._emitir_tokens(usuario, login_nuevo=True)
 
     def _clave_token_recuperacion(self, token: str) -> str:
-        llave = get_or_throw("AUTH_TOKEN_SECRET").encode()
+        llave = get_settings().auth.auth_token_secret.get_secret_value().encode()
         return "reset-password:" + hmac.new(llave, token.encode(), sha256).hexdigest()
 
     async def solicitar_recuperacion(self, email: str) -> None:
@@ -205,7 +205,7 @@ class AuthService:
             str(usuario.id),
             ex=TTL_TOKEN_RECUPERACION_SEGUNDOS,
         )
-        frontend_url = get_or_default("FRONTEND_URL", "http://localhost:5173")
+        frontend_url = get_settings().auth.frontend_url
         enlace = f"{frontend_url}/restablecer-password?token={token}"
         try:
             await enviar_email(
