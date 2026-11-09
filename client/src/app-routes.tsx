@@ -1,5 +1,8 @@
 import type { FC } from "react";
 import { Navigate, Route, Routes } from "react-router";
+import { AudienciaDetallePage } from "./audiences/pages/audiencia-detalle-page";
+import { AudienciasPage } from "./audiences/pages/audiencias-page";
+import { NuevaAudienciaPage } from "./audiences/pages/nueva-audiencia-page";
 import { ProtectedRoute } from "./auth/components/protected-route";
 import { AjustesPage } from "./auth/pages/ajustes-page";
 import { OlvidePasswordPage } from "./auth/pages/olvide-password-page";
@@ -72,6 +75,30 @@ export const AppRoutes: FC = () => (
       element={
         <ProtectedRoute>
           <ConfiguracionContactosPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/audiencias"
+      element={
+        <ProtectedRoute>
+          <AudienciasPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/audiencias/nueva"
+      element={
+        <ProtectedRoute>
+          <NuevaAudienciaPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/audiencias/:publicId"
+      element={
+        <ProtectedRoute>
+          <AudienciaDetallePage />
         </ProtectedRoute>
       }
     />

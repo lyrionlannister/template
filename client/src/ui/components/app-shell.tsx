@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import {
   AudioWaveform,
   ChevronsUpDown,
+  Filter,
   LogOut,
   Menu,
   Moon,
@@ -20,7 +21,7 @@ import { cn } from "../../shared/utils/cn";
 
 // Mismo nav en toda la app (ver resources/Pulso Vistas del Sistema.html):
 // solo las areas que ya existen construidas, nunca dashboard/campanas/
-// plantillas/audiencias todavia.
+// plantillas todavia.
 const NAV_GRUPOS = [
   {
     label: "Contactos",
@@ -28,6 +29,10 @@ const NAV_GRUPOS = [
       { label: "Contactos", href: "/contactos", icon: Users },
       { label: "Importar", href: "/contactos/importar", icon: Upload },
     ],
+  },
+  {
+    label: "Audiencias",
+    items: [{ label: "Audiencias", href: "/audiencias", icon: Filter }],
   },
   {
     label: "Cuenta",
