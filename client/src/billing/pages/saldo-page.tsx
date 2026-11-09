@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState, type FC, type FormEvent } from "react";
-import { CreditCard, Landmark, Settings, Smartphone, Users, Wallet } from "lucide-react";
+import { useNavigate } from "react-router";
+import { CreditCard, Landmark, Smartphone, Wallet } from "lucide-react";
 import { useAuth } from "../../auth/hooks/use-auth";
+import type { Plan } from "../../auth/types/plan";
 import type { Usuario } from "../../auth/types/usuario";
 import { formatCop } from "../../shared/utils/format-cop";
 import { Alert } from "../../ui/components/alert";
@@ -25,12 +27,8 @@ import { useWompiTokenizacion } from "../hooks/use-wompi-tokenizacion";
 import type { TokensDeAceptacion } from "../types/fuente-de-pago";
 import type { EstadoMovimiento, InstitucionFinanciera, MedioRecarga, SaldoEstado } from "../types/saldo";
 
-const NAV_ITEMS = [
-  { label: "Contactos", href: "/contactos", icon: Users },
-  { label: "Ajustes", href: "/ajustes", icon: Settings },
-];
-
 const inicialesDe = (email: string): string => email.slice(0, 2).toUpperCase();
+const ROL_LABEL: Record<Usuario["rol"], string> = { administrador: "Administrador", miembro: "Miembro" };
 
 const MAX_INTENTOS_POLLING = 30;
 const INTERVALO_POLLING_MS = 2000;
@@ -43,7 +41,7 @@ const ESTADO_PILL: Record<EstadoMovimiento, { variant: "ok" | "warn" | "err"; la
 };
 
 export const SaldoPage: FC = () => {
-  const { obtenerSesionActual } = useAuth();
+  const { obtenerSesionActual, obtenerMiPlan, cerrarSesion } = useAuth();
   const {
     obtenerEstadoSaldo,
     obtenerTokensDeAceptacion,
@@ -54,8 +52,10 @@ export const SaldoPage: FC = () => {
     recargarNequi,
   } = useBilling();
   const { tokenizarTarjeta } = useWompiTokenizacion();
+  const navigate = useNavigate();
 
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [plan, setPlan] = useState<Plan | null>(null);
   const [saldo, setSaldo] = useState<SaldoEstado | null>(null);
   const [tokens, setTokens] = useState<TokensDeAceptacion | null>(null);
   const [instituciones, setInstituciones] = useState<InstitucionFinanciera[]>([]);
@@ -89,12 +89,14 @@ export const SaldoPage: FC = () => {
     setCargando(true);
     return Promise.all([
       obtenerSesionActual(),
+      obtenerMiPlan(),
       obtenerEstadoSaldo(),
       obtenerTokensDeAceptacion(),
       obtenerInstitucionesFinancieras(),
     ])
-      .then(([sesion, estadoSaldo, tokensDeAceptacion, listaInstituciones]) => {
+      .then(([sesion, miPlan, estadoSaldo, tokensDeAceptacion, listaInstituciones]) => {
         setUsuario(sesion);
+        setPlan(miPlan);
         setSaldo(estadoSaldo);
         setTokens(tokensDeAceptacion);
         setInstituciones(listaInstituciones);
@@ -104,11 +106,16 @@ export const SaldoPage: FC = () => {
       .finally(() => setCargando(false));
     // bancoCode se excluye a propósito: solo se usa como default inicial, no se quiere recargar al cambiarlo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [obtenerSesionActual, obtenerEstadoSaldo, obtenerTokensDeAceptacion, obtenerInstitucionesFinancieras]);
+  }, [obtenerSesionActual, obtenerMiPlan, obtenerEstadoSaldo, obtenerTokensDeAceptacion, obtenerInstitucionesFinancieras]);
 
   useEffect(() => {
     cargarTodo();
   }, [cargarTodo]);
+
+  const salir = async () => {
+    await cerrarSesion();
+    navigate("/login");
+  };
 
   const pollearMovimiento = useCallback(
     async (publicId: string) => {
@@ -197,11 +204,15 @@ export const SaldoPage: FC = () => {
 
   return (
     <AppShell
-      navItems={NAV_ITEMS}
-      activeHref="/ajustes"
+      activeHref="/suscripcion"
+      pageTitle="Saldo"
       logoLabel="Pulso"
+      tenantNombre={usuario?.tenantNombre ?? ""}
+      planNombre={plan?.nombre ?? ""}
       userName={usuario?.email ?? ""}
       userInitials={usuario ? inicialesDe(usuario.email) : "--"}
+      userRolLabel={usuario ? ROL_LABEL[usuario.rol] : ""}
+      onCerrarSesion={salir}
     >
       <div className="mb-5">
         <h1 className="text-[22px] mb-1">Saldo</h1>

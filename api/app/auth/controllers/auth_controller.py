@@ -49,13 +49,22 @@ _limite_recuperacion = Depends(
 )
 
 
-def _a_respuesta(usuario) -> UsuarioRespuesta:
-    return UsuarioRespuesta.model_validate(usuario)
+async def _a_respuesta(usuario, service: AuthServiceDep) -> UsuarioRespuesta:
+    tenant = await service.obtener_tenant(usuario.tenant_id)
+    return UsuarioRespuesta(
+        public_id=usuario.public_id,
+        email=usuario.email,
+        rol=usuario.rol,
+        mfa_habilitado=usuario.mfa_habilitado,
+        tenant_nombre=tenant.nombre if tenant else "",
+    )
 
 
-def _respuesta_de(resultado: AuthResultado, response: Response) -> UsuarioRespuesta:
+async def _respuesta_de(
+    resultado: AuthResultado, response: Response, service: AuthServiceDep
+) -> UsuarioRespuesta:
     set_auth_cookies(response, resultado.access_token, resultado.refresh_token)
-    return _a_respuesta(resultado.usuario)
+    return await _a_respuesta(resultado.usuario, service)
 
 
 @router.post(
@@ -71,7 +80,7 @@ async def registrar(
         resultado = await service.registrar(body)
     except ValueError as error:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(error)) from error
-    return _respuesta_de(resultado, response)
+    return await _respuesta_de(resultado, response, service)
 
 
 @router.post("/login", response_model=UsuarioRespuesta, dependencies=[_limite_auth])
@@ -84,7 +93,7 @@ async def login(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(error)) from error
     except LimiteDeIntentosError as error:
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, str(error)) from error
-    return _respuesta_de(resultado, response)
+    return await _respuesta_de(resultado, response, service)
 
 
 @router.post("/google", response_model=UsuarioRespuesta, dependencies=[_limite_auth])
@@ -97,7 +106,7 @@ async def login_con_google(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(error)) from error
     except CuentaGoogleNoRegistradaError as error:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(error)) from error
-    return _respuesta_de(resultado, response)
+    return await _respuesta_de(resultado, response, service)
 
 
 @router.post(
@@ -174,7 +183,7 @@ async def refrescar(
         resultado = await service.refrescar(refresh_token)
     except CredencialesInvalidasError as error:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(error)) from error
-    return _respuesta_de(resultado, response)
+    return await _respuesta_de(resultado, response, service)
 
 
 @router.post("/logout", status_code=status.HTTP_200_OK)
@@ -191,7 +200,7 @@ async def quien_soy(sesion: SesionActual, service: AuthServiceDep) -> UsuarioRes
     usuario = await service.obtener_usuario(sesion.usuario_id)
     if usuario is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Usuario no encontrado.")
-    return _a_respuesta(usuario)
+    return await _a_respuesta(usuario, service)
 
 
 @router.get("/mi-plan", response_model=PlanRespuesta)
@@ -220,4 +229,4 @@ async def invitar_usuario(
         raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
     except ValueError as error:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(error)) from error
-    return _a_respuesta(usuario)
+    return await _a_respuesta(usuario, service)

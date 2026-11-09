@@ -1,6 +1,6 @@
 import { useEffect, useState, type FC, type FormEvent } from "react";
 import { useNavigate } from "react-router";
-import { LogOut, Settings, UserPlus, Users } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { useAuth } from "../hooks/use-auth";
 import type { Plan } from "../types/plan";
 import type { Usuario } from "../types/usuario";
@@ -16,12 +16,8 @@ import { Pill } from "../../ui/components/pill";
 import { Spinner } from "../../ui/components/spinner";
 import { Tabs } from "../../ui/components/tabs";
 
-const NAV_ITEMS = [
-  { label: "Contactos", href: "/contactos", icon: Users },
-  { label: "Ajustes", href: "/ajustes", icon: Settings },
-];
-
 const inicialesDe = (email: string): string => email.slice(0, 2).toUpperCase();
+const ROL_LABEL: Record<Usuario["rol"], string> = { administrador: "Administrador", miembro: "Miembro" };
 
 export const AjustesPage: FC = () => {
   const { obtenerSesionActual, obtenerMiPlan, invitarUsuario, cerrarSesion } = useAuth();
@@ -73,21 +69,19 @@ export const AjustesPage: FC = () => {
 
   return (
     <AppShell
-      navItems={NAV_ITEMS}
       activeHref="/ajustes"
+      pageTitle="Ajustes"
       logoLabel="Pulso"
+      tenantNombre={usuario?.tenantNombre ?? ""}
+      planNombre={plan?.nombre ?? ""}
       userName={usuario?.email ?? ""}
       userInitials={usuario ? inicialesDe(usuario.email) : "--"}
+      userRolLabel={usuario ? ROL_LABEL[usuario.rol] : ""}
+      onCerrarSesion={salir}
     >
-      <div className="flex items-start justify-between gap-4 flex-wrap mb-5">
-        <div>
-          <h1 className="text-[22px] mb-1">Ajustes</h1>
-          <p className="text-ink-2 text-sm">Equipo y plan de tu negocio.</p>
-        </div>
-        <Button variant="ghost" size="sm" onClick={salir}>
-          <LogOut className="size-4" aria-hidden />
-          Cerrar sesión
-        </Button>
+      <div className="mb-5">
+        <h1 className="text-[22px] mb-1">Ajustes</h1>
+        <p className="text-ink-2 text-sm">Equipo y plan de tu negocio.</p>
       </div>
 
       {cargando ? (

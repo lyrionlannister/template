@@ -1,6 +1,8 @@
 import { useEffect, useState, type FC, type FormEvent } from "react";
-import { CreditCard, Settings, Users } from "lucide-react";
+import { useNavigate } from "react-router";
+import { CreditCard } from "lucide-react";
 import { useAuth } from "../../auth/hooks/use-auth";
+import type { Plan } from "../../auth/types/plan";
 import type { Usuario } from "../../auth/types/usuario";
 import { formatCop } from "../../shared/utils/format-cop";
 import { Alert } from "../../ui/components/alert";
@@ -15,19 +17,17 @@ import { useWompiTokenizacion } from "../hooks/use-wompi-tokenizacion";
 import type { Cobro } from "../types/cobro";
 import type { OnboardingEstado } from "../types/onboarding-estado";
 
-const NAV_ITEMS = [
-  { label: "Contactos", href: "/contactos", icon: Users },
-  { label: "Ajustes", href: "/ajustes", icon: Settings },
-];
-
 const inicialesDe = (email: string): string => email.slice(0, 2).toUpperCase();
+const ROL_LABEL: Record<Usuario["rol"], string> = { administrador: "Administrador", miembro: "Miembro" };
 
 export const OnboardingPage: FC = () => {
-  const { obtenerSesionActual } = useAuth();
+  const { obtenerSesionActual, obtenerMiPlan, cerrarSesion } = useAuth();
   const { obtenerEstadoOnboarding, pagarOnboarding } = useBilling();
   const { tokenizarTarjeta } = useWompiTokenizacion();
+  const navigate = useNavigate();
 
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [plan, setPlan] = useState<Plan | null>(null);
   const [estado, setEstado] = useState<OnboardingEstado | null>(null);
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
@@ -45,16 +45,22 @@ export const OnboardingPage: FC = () => {
   const [cobro, setCobro] = useState<Cobro | null>(null);
 
   useEffect(() => {
-    Promise.all([obtenerSesionActual(), obtenerEstadoOnboarding()])
-      .then(([sesion, estadoActual]) => {
+    Promise.all([obtenerSesionActual(), obtenerMiPlan(), obtenerEstadoOnboarding()])
+      .then(([sesion, miPlan, estadoActual]) => {
         setUsuario(sesion);
+        setPlan(miPlan);
         setEstado(estadoActual);
       })
       .catch((err) =>
         setErrorCarga(err instanceof Error ? err.message : "No se pudo cargar el onboarding."),
       )
       .finally(() => setCargando(false));
-  }, [obtenerSesionActual, obtenerEstadoOnboarding]);
+  }, [obtenerSesionActual, obtenerMiPlan, obtenerEstadoOnboarding]);
+
+  const salir = async () => {
+    await cerrarSesion();
+    navigate("/login");
+  };
 
   const pagar = async (event: FormEvent) => {
     event.preventDefault();
@@ -93,11 +99,15 @@ export const OnboardingPage: FC = () => {
 
   return (
     <AppShell
-      navItems={NAV_ITEMS}
-      activeHref="/ajustes"
+      activeHref="/suscripcion"
+      pageTitle="Onboarding"
       logoLabel="Pulso"
+      tenantNombre={usuario?.tenantNombre ?? ""}
+      planNombre={plan?.nombre ?? ""}
       userName={usuario?.email ?? ""}
       userInitials={usuario ? inicialesDe(usuario.email) : "--"}
+      userRolLabel={usuario ? ROL_LABEL[usuario.rol] : ""}
+      onCerrarSesion={salir}
     >
       <div className="mb-5">
         <h1 className="text-[22px] mb-1">Onboarding</h1>
