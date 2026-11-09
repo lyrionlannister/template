@@ -10,6 +10,7 @@ import { Button } from "../../ui/components/button";
 import { Field } from "../../ui/components/field";
 import { Input } from "../../ui/components/input";
 import { Pill } from "../../ui/components/pill";
+import { SecureStrip } from "../../ui/components/secure-strip";
 import { Spinner } from "../../ui/components/spinner";
 import { TarjetaVisual } from "../../ui/components/tarjeta-visual";
 import { detectarMarcaTarjeta } from "../../shared/utils/detectar-marca-tarjeta";
@@ -365,6 +366,10 @@ export const SuscripcionPage: FC = () => {
                     />
                   </Field>
                 </div>
+              </div>
+
+              <div className="mb-4.5 md:max-w-sm">
+                <SecureStrip />
               </div>
 
               <div className="flex flex-col gap-3 mb-4.5">

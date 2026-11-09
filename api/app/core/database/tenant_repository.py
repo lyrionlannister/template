@@ -57,19 +57,23 @@ class TenantScopedRepository[ModelT: TenantScopedMixin](RepositoryBase[ModelT]):
 
     async def update(self, instancia: ModelT) -> ModelT:
         actualizada = await super().update(instancia)
-        await self._invalidar(actualizada.id)
+        await self._invalidar(actualizada.id, actualizada.tenant_id)
         return actualizada
 
     async def delete(self, instancia: ModelT) -> None:
         id_interno = instancia.id
+        tenant_id = instancia.tenant_id
         await super().delete(instancia)
-        await self._invalidar(id_interno)
+        await self._invalidar(id_interno, tenant_id)
 
     def _clave_cache(self, id_interno: int, tenant_id: int) -> str:
         return f"{self.model.__tablename__}:{tenant_id}:{id_interno}"
 
-    async def _invalidar(self, id_interno: int) -> None:
-        tenant_id = get_current_tenant_id()
+    async def _invalidar(self, id_interno: int, tenant_id: int) -> None:
+        # El tenant lo trae la propia instancia, no el `ContextVar`: `update()`
+        # y `delete()` corren a veces fuera de una petición con tenant en
+        # contexto (ej. recuperación de password por token, sin sesión
+        # todavía) y la instancia ya es la fuente de verdad de su tenant.
         await valkey_client.delete(self._clave_cache(id_interno, tenant_id))
 
     def _serializar(self, instancia: ModelT) -> str:

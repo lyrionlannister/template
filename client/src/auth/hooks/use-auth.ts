@@ -19,6 +19,27 @@ export const useAuth = () => {
     [apiClient],
   );
 
+  const loginConGoogle = useCallback(
+    (idToken: string) =>
+      apiClient<Usuario>("/auth/google", { method: "POST", body: JSON.stringify({ idToken }) }),
+    [apiClient],
+  );
+
+  const solicitarRecuperacion = useCallback(
+    (email: string) =>
+      apiClient<null>("/auth/password/olvide", { method: "POST", body: JSON.stringify({ email }) }),
+    [apiClient],
+  );
+
+  const restablecerPassword = useCallback(
+    (token: string, nuevaPassword: string) =>
+      apiClient<null>("/auth/password/restablecer", {
+        method: "POST",
+        body: JSON.stringify({ token, nuevaPassword }),
+      }),
+    [apiClient],
+  );
+
   const enviarOtp = useCallback(
     (canal: CanalOtp) => apiClient<null>("/auth/otp/enviar", { method: "POST", body: JSON.stringify({ canal }) }),
     [apiClient],
@@ -45,6 +66,9 @@ export const useAuth = () => {
   return {
     registrar,
     login,
+    loginConGoogle,
+    solicitarRecuperacion,
+    restablecerPassword,
     enviarOtp,
     verificarOtp,
     cerrarSesion,

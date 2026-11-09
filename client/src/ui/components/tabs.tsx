@@ -3,7 +3,7 @@ import type { TabsProps } from "../props/tabs-props";
 import { cn } from "../../shared/utils/cn";
 
 export const Tabs: FC<TabsProps> = ({ options, value, onChange }) => (
-  <div role="tablist" className="flex gap-1 border-b border-border overflow-x-auto">
+  <div role="tablist" className="flex gap-1 border-b border-border overflow-x-auto overflow-y-hidden">
     {options.map((option) => (
       <button
         key={option.value}

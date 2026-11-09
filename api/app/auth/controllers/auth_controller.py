@@ -15,15 +15,21 @@ from app.auth.exceptions import (
     CodigoOtpNoEncontradoError,
     CodigoOtpYaUsadoError,
     CredencialesInvalidasError,
+    CuentaGoogleNoRegistradaError,
+    EnvioDeCorreoFallidoError,
     LimiteDeIntentosError,
     PermisoInsuficienteError,
+    TokenRecuperacionInvalidoError,
 )
 from app.auth.schemas.auth_schemas import (
+    GoogleLoginRequest,
     InvitarUsuarioRequest,
     LoginRequest,
+    OlvidePasswordRequest,
     OtpEnviarRequest,
     OtpVerificarRequest,
     RegistroRequest,
+    RestablecerPasswordRequest,
     UsuarioRespuesta,
 )
 from app.auth.services.auth_service import AuthResultado
@@ -38,6 +44,9 @@ from app.core.security.rate_limit import rate_limit
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 _limite_auth = Depends(rate_limit("auth", maximo_intentos=20, ventana_segundos=60))
+_limite_recuperacion = Depends(
+    rate_limit("recuperacion", maximo_intentos=8, ventana_segundos=300)
+)
 
 
 def _a_respuesta(usuario) -> UsuarioRespuesta:
@@ -76,6 +85,47 @@ async def login(
     except LimiteDeIntentosError as error:
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, str(error)) from error
     return _respuesta_de(resultado, response)
+
+
+@router.post("/google", response_model=UsuarioRespuesta, dependencies=[_limite_auth])
+async def login_con_google(
+    body: GoogleLoginRequest, response: Response, service: AuthServiceDep
+) -> UsuarioRespuesta:
+    try:
+        resultado = await service.login_con_google(body.id_token)
+    except CredencialesInvalidasError as error:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(error)) from error
+    except CuentaGoogleNoRegistradaError as error:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(error)) from error
+    return _respuesta_de(resultado, response)
+
+
+@router.post(
+    "/password/olvide",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[_limite_recuperacion],
+)
+async def olvide_password(
+    body: OlvidePasswordRequest, service: AuthServiceDep
+) -> None:
+    try:
+        await service.solicitar_recuperacion(body.email)
+    except EnvioDeCorreoFallidoError as error:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, str(error)) from error
+
+
+@router.post(
+    "/password/restablecer",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[_limite_recuperacion],
+)
+async def restablecer_password(
+    body: RestablecerPasswordRequest, service: AuthServiceDep
+) -> None:
+    try:
+        await service.restablecer_password(body.token, body.nueva_password)
+    except TokenRecuperacionInvalidoError as error:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(error)) from error
 
 
 @router.post(
