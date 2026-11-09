@@ -27,3 +27,4 @@ from app.contacts.models import (  # noqa: F401
     contacto_rechazado_model,
     importacion_contacto_model,
 )
+from app.templates.models import plantilla_model  # noqa: F401

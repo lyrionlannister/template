@@ -89,6 +89,17 @@ class AudienciasService:
             return await self.contacts_service.contar_por_filtro(filtro)
         return await self.audiencia_repository.contar_snapshot(audiencia.id)
 
+    async def listar_ids_de_contactos(self, audiencia: Audiencia) -> list[int]:
+        """Para dominios que necesitan los contactos reales de una
+        audiencia (ej. `templates` verificando variables faltantes), sin
+        importar `Contacto`/`ContactoRepository` directo."""
+        if audiencia.tipo == TipoAudiencia.dinamica:
+            filtro = FiltroAudiencia.model_validate(audiencia.filtro)
+            return await self.contacts_service.listar_ids_por_filtro(filtro)
+        return await self.audiencia_repository.listar_contacto_ids_snapshot(
+            audiencia.id
+        )
+
     async def actualizar(
         self,
         public_id: UUID,
