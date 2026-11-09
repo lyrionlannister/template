@@ -16,7 +16,7 @@ from sqlalchemy import delete
 from app.auth.models.codigo_otp_model import CodigoOtp
 from app.auth.models.tenant_model import Tenant
 from app.auth.models.usuario_model import Usuario
-from app.core.config.env_tools import get_or_throw
+from app.core.config.settings import get_settings
 from app.core.database.session import async_session_factory
 from app.core.valkey.client import valkey_client
 from main import app
@@ -115,7 +115,11 @@ async def _tokenizar_tarjeta_de_prueba_como_lo_haria_el_navegador() -> str:
                 "exp_year": "30",
                 "card_holder": "Prueba Fuente De Pago",
             },
-            headers={"Authorization": f"Bearer {get_or_throw('WOMPI_PUBLIC_KEY')}"},
+            headers={
+                "Authorization": (
+                    f"Bearer {get_settings().billing.wompi_public_key.get_secret_value()}"
+                )
+            },
         )
         respuesta.raise_for_status()
         return respuesta.json()["data"]["id"]

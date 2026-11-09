@@ -10,7 +10,7 @@ import json
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from app.core.config.env_tools import get_or_default
+from app.core.config.settings import get_settings
 
 ASGIMessage = dict[str, Any]
 Receive = Callable[[], Awaitable[ASGIMessage]]
@@ -22,11 +22,7 @@ _METODOS_MUTANTES = {"POST", "PUT", "PATCH", "DELETE"}
 class OriginCheckMiddleware:
     def __init__(self, app) -> None:
         self.app = app
-        self._permitidos = {
-            origen.strip()
-            for origen in get_or_default("ALLOWED_ORIGINS", "").split(",")
-            if origen.strip()
-        }
+        self._permitidos = set(get_settings().app.allowed_origins)
 
     async def __call__(self, scope: dict, receive: Receive, send: Send) -> None:
         if scope["type"] != "http" or scope.get("method") not in _METODOS_MUTANTES:

@@ -6,7 +6,7 @@ import base64
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerifyMismatchError
 
-from app.core.config.env_tools import get_or_throw
+from app.core.config.settings import get_settings
 
 
 def _decodificar_pepper(valor: str) -> bytes:
@@ -19,7 +19,8 @@ def _decodificar_pepper(valor: str) -> bytes:
 class PasswordHasherService:
     def __init__(self, hasher: PasswordHasher | None = None):
         self._hasher = hasher or PasswordHasher()
-        self._pepper = _decodificar_pepper(get_or_throw("PASSWORD_PEPPER").strip())
+        pepper = get_settings().auth.password_pepper.get_secret_value()
+        self._pepper = _decodificar_pepper(pepper.strip())
 
     def _con_pepper(self, password: str) -> str:
         if not self._pepper:

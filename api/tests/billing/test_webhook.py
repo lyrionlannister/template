@@ -9,6 +9,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import delete, select
 
 from app.billing.models.evento_pago_procesado_model import EventoPagoProcesado
+from app.core.config.settings import get_settings
 from app.core.database.session import async_session_factory
 from main import app
 
@@ -18,6 +19,9 @@ _SECRETO_EVENTOS = "test_events_secret_webhook"
 @pytest.fixture(autouse=True)
 def _secreto_eventos(monkeypatch):
     monkeypatch.setenv("WOMPI_EVENTS_SECRET", _SECRETO_EVENTOS)
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
 
 
 @pytest.fixture

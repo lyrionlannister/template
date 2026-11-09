@@ -1,16 +1,16 @@
 """Cliente Valkey único y reutilizable para toda la aplicación.
 
 `redis-py` en modo async, apuntando a Valkey (protocolo RESP, ver
-`app/core/config/valkey_config.py`). Un solo cliente por proceso: `redis-py`
+`app/core/config/settings.py`). Un solo cliente por proceso: `redis-py`
 ya mantiene su propio pool de conexiones internamente.
 """
 
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
-from app.core.config.valkey_config import valkey_config
+from app.core.config.settings import get_settings
 
-valkey_client = Redis.from_url(valkey_config.url, decode_responses=True)
+valkey_client = Redis.from_url(get_settings().valkey.url, decode_responses=True)
 
 
 async def check_valkey_health() -> bool:

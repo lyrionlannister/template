@@ -23,7 +23,7 @@ from typing import Any
 
 import httpx
 
-from app.core.config.env_tools import get_or_default, get_or_throw
+from app.core.config.settings import get_settings
 
 PASARELA = "wompi"
 
@@ -34,18 +34,13 @@ _AMBIENTE_A_BASE_URL = {
 
 
 def _base_url() -> str:
-    ambiente = get_or_default("WOMPI_AMBIENTE", "sandbox")
-    if ambiente not in _AMBIENTE_A_BASE_URL:
-        raise ValueError(
-            f"WOMPI_AMBIENTE debe ser 'sandbox' o 'production', recibido: {ambiente!r}"
-        )
-    return _AMBIENTE_A_BASE_URL[ambiente]
+    return _AMBIENTE_A_BASE_URL[get_settings().billing.wompi_ambiente]
 
 
 def calcular_firma_integridad(
     reference: str, amount_in_cents: int, currency: str
 ) -> str:
-    secreto = get_or_throw("WOMPI_INTEGRITY_SECRET")
+    secreto = get_settings().billing.wompi_integrity_secret.get_secret_value()
     cadena = f"{reference}{amount_in_cents}{currency}{secreto}"
     return hashlib.sha256(cadena.encode()).hexdigest()
 
@@ -72,7 +67,7 @@ def verificar_checksum_evento(payload: dict[str, Any]) -> bool:
             valor = valor[parte]
         valores.append(str(valor))
 
-    secreto = get_or_throw("WOMPI_EVENTS_SECRET")
+    secreto = get_settings().billing.wompi_events_secret.get_secret_value()
     cadena = "".join(valores) + str(timestamp) + secreto
     checksum_calculado = hashlib.sha256(cadena.encode()).hexdigest()
     return checksum_calculado.upper() == str(checksum_recibido).upper()
@@ -186,7 +181,7 @@ class WompiClient:
             "currency": currency,
             "customer_email": customer_email,
             "reference": reference,
-            "public_key": get_or_throw("WOMPI_PUBLIC_KEY"),
+            "public_key": get_settings().billing.wompi_public_key.get_secret_value(),
             "signature": calcular_firma_integridad(
                 reference, amount_in_cents, currency
             ),
@@ -222,7 +217,9 @@ class WompiClient:
 
         respuesta = await self._http.get(
             "/merchants/info",
-            headers={"x-merchant-public-key": get_or_throw("WOMPI_PUBLIC_KEY")},
+            headers={
+                "x-merchant-public-key": get_settings().billing.wompi_public_key.get_secret_value()
+            },
         )
         respuesta.raise_for_status()
         return respuesta.json()
@@ -247,4 +244,5 @@ class WompiClient:
         return respuesta.json()
 
     def _encabezado_llave_privada(self) -> dict[str, str]:
-        return {"Authorization": f"Bearer {get_or_throw('WOMPI_PRIVATE_KEY')}"}
+        secreto = get_settings().billing.wompi_private_key.get_secret_value()
+        return {"Authorization": f"Bearer {secreto}"}

@@ -8,6 +8,7 @@ import httpx
 import pytest
 
 from app.billing.clients import wompi_client
+from app.core.config.settings import get_settings
 
 _SECRETO_INTEGRIDAD = "prod_integrity_test_secret"
 _SECRETO_EVENTOS = "test_events_secret"
@@ -19,6 +20,9 @@ def _secretos_wompi(monkeypatch):
     monkeypatch.setenv("WOMPI_EVENTS_SECRET", _SECRETO_EVENTOS)
     monkeypatch.setenv("WOMPI_PUBLIC_KEY", "pub_test_fake")
     monkeypatch.setenv("WOMPI_PRIVATE_KEY", "prv_test_fake")
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
 
 
 def test_firma_de_integridad_sigue_el_orden_referencia_monto_moneda_secreto():
