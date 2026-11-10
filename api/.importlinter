@@ -28,6 +28,15 @@ layers =
     app.contacts.repositories
     app.contacts.models
 
+[importlinter:contract:templates-layers]
+name = Capas de templates
+type = layers
+layers =
+    app.templates.controllers
+    app.templates.services
+    app.templates.repositories
+    app.templates.models
+
 [importlinter:contract:messaging-layers]
 name = Capas de messaging
 type = layers
@@ -66,6 +75,8 @@ forbidden_modules =
     app.audiences.models
     app.contacts.repositories
     app.contacts.models
+    app.templates.repositories
+    app.templates.models
     app.messaging.repositories
     app.messaging.models
     app.app_platform.repositories
@@ -84,6 +95,8 @@ forbidden_modules =
     app.auth.models
     app.contacts.repositories
     app.contacts.models
+    app.templates.repositories
+    app.templates.models
     app.messaging.repositories
     app.messaging.models
     app.app_platform.repositories
@@ -102,6 +115,28 @@ forbidden_modules =
     app.audiences.models
     app.auth.repositories
     app.auth.models
+    app.templates.repositories
+    app.templates.models
+    app.messaging.repositories
+    app.messaging.models
+    app.app_platform.repositories
+    app.app_platform.models
+    app.billing.repositories
+    app.billing.models
+
+[importlinter:contract:templates-no-cross-domain]
+name = templates no importa repositories/models de otros dominios
+type = forbidden
+allow_indirect_imports = True
+source_modules =
+    app.templates
+forbidden_modules =
+    app.audiences.repositories
+    app.audiences.models
+    app.auth.repositories
+    app.auth.models
+    app.contacts.repositories
+    app.contacts.models
     app.messaging.repositories
     app.messaging.models
     app.app_platform.repositories
@@ -122,6 +157,8 @@ forbidden_modules =
     app.auth.models
     app.contacts.repositories
     app.contacts.models
+    app.templates.repositories
+    app.templates.models
     app.app_platform.repositories
     app.app_platform.models
     app.billing.repositories
@@ -140,6 +177,8 @@ forbidden_modules =
     app.auth.models
     app.contacts.repositories
     app.contacts.models
+    app.templates.repositories
+    app.templates.models
     app.messaging.repositories
     app.messaging.models
     app.billing.repositories
@@ -158,6 +197,8 @@ forbidden_modules =
     app.auth.models
     app.contacts.repositories
     app.contacts.models
+    app.templates.repositories
+    app.templates.models
     app.messaging.repositories
     app.messaging.models
     app.app_platform.repositories

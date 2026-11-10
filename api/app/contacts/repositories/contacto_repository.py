@@ -53,6 +53,14 @@ class ContactoRepository(TenantScopedRepository[Contacto]):
         )
         return resultado.scalars().first()
 
+    async def listar_por_ids(self, ids: list[int]) -> list[Contacto]:
+        if not ids:
+            return []
+        resultado = await self.session.execute(
+            self.scoped().where(Contacto.id.in_(ids))
+        )
+        return list(resultado.scalars().all())
+
     def _query_busqueda(self, busqueda_telefono: str | None):
         query = self.scoped()
         if busqueda_telefono:

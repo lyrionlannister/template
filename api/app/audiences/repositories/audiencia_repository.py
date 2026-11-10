@@ -56,3 +56,11 @@ class AudienciaRepository(TenantScopedRepository[Audiencia]):
             select(func.count()).where(AudienciaContacto.audiencia_id == audiencia_id)
         )
         return resultado.scalar_one()
+
+    async def listar_contacto_ids_snapshot(self, audiencia_id: int) -> list[int]:
+        resultado = await self.session.execute(
+            select(AudienciaContacto.contacto_id).where(
+                AudienciaContacto.audiencia_id == audiencia_id
+            )
+        )
+        return list(resultado.scalars().all())

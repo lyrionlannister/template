@@ -58,6 +58,7 @@ from app.contacts.repositories.contacto_repository import ContactoRepository
 from app.contacts.repositories.importacion_contacto_repository import (
     ImportacionContactoRepository,
 )
+from app.contacts.schemas.contacto_schema import ContactoRespuesta
 from app.contacts.schemas.filtro_schema import FiltroAudiencia
 from app.contacts.utils.telefono_utils import normalizar_telefono_e164
 from app.core.database.session import async_session_factory
@@ -335,6 +336,14 @@ class ContactsService:
         await self.conflicto_repository.update(conflicto)
         await self.session.commit()
         return contacto
+
+    async def listar_por_ids(self, ids: list[int]) -> list[ContactoRespuesta]:
+        """Para dominios que ya resolvieron una lista de ids de contacto
+        (ej. `templates` verificando variables sobre una audiencia) y
+        necesitan sus datos sin importar `Contacto` directo (prohibido por
+        import-linter fuera de `contacts`)."""
+        contactos = await self.contacto_repository.listar_por_ids(ids)
+        return [ContactoRespuesta.model_validate(c) for c in contactos]
 
     async def listar_claves_variables(self) -> list[str]:
         """Claves de `variables` que existen hoy entre los contactos del

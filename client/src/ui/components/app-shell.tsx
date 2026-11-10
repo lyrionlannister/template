@@ -4,6 +4,7 @@ import {
   AudioWaveform,
   ChevronsUpDown,
   Filter,
+  LayoutTemplate,
   LogOut,
   Menu,
   Moon,
@@ -20,8 +21,8 @@ import { useTheme } from "../hooks/use-theme";
 import { cn } from "../../shared/utils/cn";
 
 // Mismo nav en toda la app (ver resources/Pulso Vistas del Sistema.html):
-// solo las areas que ya existen construidas, nunca dashboard/campanas/
-// plantillas todavia.
+// solo las areas que ya existen construidas, nunca dashboard/campanas
+// todavia.
 const NAV_GRUPOS = [
   {
     label: "Contactos",
@@ -33,6 +34,10 @@ const NAV_GRUPOS = [
   {
     label: "Audiencias",
     items: [{ label: "Audiencias", href: "/audiencias", icon: Filter }],
+  },
+  {
+    label: "Plantillas",
+    items: [{ label: "Plantillas", href: "/plantillas", icon: LayoutTemplate }],
   },
   {
     label: "Cuenta",

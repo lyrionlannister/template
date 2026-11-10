@@ -15,6 +15,9 @@ import { SuscripcionPage } from "./billing/pages/suscripcion-page";
 import { ConfiguracionContactosPage } from "./contacts/pages/configuracion-contactos-page";
 import { ContactosPage } from "./contacts/pages/contactos-page";
 import { ImportarContactosPage } from "./contacts/pages/importar-contactos-page";
+import { NuevaPlantillaPage } from "./templates/pages/nueva-plantilla-page";
+import { PlantillaDetallePage } from "./templates/pages/plantilla-detalle-page";
+import { PlantillasPage } from "./templates/pages/plantillas-page";
 
 export const AppRoutes: FC = () => (
   <Routes>
@@ -99,6 +102,30 @@ export const AppRoutes: FC = () => (
       element={
         <ProtectedRoute>
           <AudienciaDetallePage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/plantillas"
+      element={
+        <ProtectedRoute>
+          <PlantillasPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/plantillas/nueva"
+      element={
+        <ProtectedRoute>
+          <NuevaPlantillaPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/plantillas/:publicId"
+      element={
+        <ProtectedRoute>
+          <PlantillaDetallePage />
         </ProtectedRoute>
       }
     />
