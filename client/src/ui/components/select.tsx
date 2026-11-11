@@ -2,8 +2,16 @@ import type { FC } from "react";
 import { ChevronDown } from "lucide-react";
 import type { SelectProps } from "../props/select-props";
 import { cn } from "../../shared/utils/cn";
+import { alInvalidoEnEspanol, limpiarValidezNativa } from "../../shared/utils/native-validation-message";
 
-export const Select: FC<SelectProps> = ({ options, invalid = false, className, ...rest }) => (
+export const Select: FC<SelectProps> = ({
+  options,
+  invalid = false,
+  className,
+  onInvalid,
+  onChange,
+  ...rest
+}) => (
   <div className="relative">
     <select
       className={cn(
@@ -14,6 +22,14 @@ export const Select: FC<SelectProps> = ({ options, invalid = false, className, .
         invalid ? "border-err shadow-[0_0_0_4px_var(--color-err-soft)]" : "border-border",
         className,
       )}
+      onInvalid={(event) => {
+        alInvalidoEnEspanol(event);
+        onInvalid?.(event);
+      }}
+      onChange={(event) => {
+        limpiarValidezNativa(event);
+        onChange?.(event);
+      }}
       {...rest}
     >
       {options.map((option) => (
