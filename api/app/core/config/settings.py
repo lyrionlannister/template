@@ -1,7 +1,7 @@
 """Configuración tipada de la aplicación, leída desde variables de entorno
 (`.env`) con `pydantic-settings`. Agrupada por dominio, sin mezclarlos.
 
-`get_settings()` es el único punto de acceso: cachea las 5 clases de
+`get_settings()` es el único punto de acceso: cachea las 6 clases de
 configuración (una instancia de proceso), así que una variable obligatoria
 que falte tira `ValidationError` al construirse, no un `RuntimeError` al
 primer uso como con la lectura de entorno anterior.
@@ -90,6 +90,20 @@ class BillingSettings(_ConfigBase):
     wompi_ambiente: Literal["sandbox", "production"] = "sandbox"
 
 
+class MessagingSettings(_ConfigBase):
+    meta_app_id: str
+    meta_app_secret: SecretStr
+    meta_config_id: str
+    meta_graph_api_version: str = "v27.0"
+    credenciales_cipher_key: SecretStr
+    # Identidad de WhatsApp de PLATAFORMA (OTP de login): nunca la de un
+    # tenant. System user con acceso total sobre la app y la cuenta de
+    # WhatsApp de Pulso -- ver /CLAUDE.md "OTP de inicio de sesión".
+    meta_access_token: SecretStr
+    meta_platform_phone_number_id: str
+    meta_platform_waba_id: str
+
+
 class Settings:
     def __init__(self) -> None:
         self.app = AppSettings()
@@ -97,6 +111,7 @@ class Settings:
         self.valkey = ValkeySettings()
         self.auth = AuthSettings()
         self.billing = BillingSettings()
+        self.messaging = MessagingSettings()
 
 
 @lru_cache

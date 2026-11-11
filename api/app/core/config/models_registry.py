@@ -27,4 +27,8 @@ from app.contacts.models import (  # noqa: F401
     contacto_rechazado_model,
     importacion_contacto_model,
 )
+from app.messaging.models import (  # noqa: F401
+    conexion_whatsapp_model,
+    plantilla_otp_plataforma_model,
+)
 from app.templates.models import plantilla_model  # noqa: F401
