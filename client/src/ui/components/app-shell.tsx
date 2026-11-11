@@ -2,15 +2,19 @@ import { useState, type FC } from "react";
 import { Link } from "react-router";
 import {
   AudioWaveform,
+  Banknote,
   ChevronsUpDown,
   Filter,
+  Landmark,
   LayoutTemplate,
   LogOut,
   Menu,
+  MessageCircle,
   Moon,
   PanelLeft,
   ReceiptText,
   Settings,
+  ShieldCheck,
   Sun,
   Upload,
   Users,
@@ -40,6 +44,10 @@ const NAV_GRUPOS = [
     items: [{ label: "Plantillas", href: "/plantillas", icon: LayoutTemplate }],
   },
   {
+    label: "WhatsApp",
+    items: [{ label: "Conectar WhatsApp", href: "/whatsapp/conectar", icon: MessageCircle }],
+  },
+  {
     label: "Cuenta",
     items: [
       { label: "Facturación", href: "/suscripcion", icon: ReceiptText },
@@ -47,6 +55,18 @@ const NAV_GRUPOS = [
     ],
   },
 ];
+
+// Solo para superadmin -- panel del administrador del sistema, nunca visible para un administrador de tenant.
+const NAV_GRUPO_ADMINISTRACION = {
+  label: "Administración",
+  items: [
+    { label: "Planes", href: "/app-platform/planes", icon: Landmark },
+    { label: "Parámetros comerciales", href: "/app-platform/parametros-comerciales", icon: Settings },
+    { label: "Costos por canal", href: "/app-platform/costos-canal", icon: Banknote },
+    { label: "Tipo de cambio", href: "/app-platform/tipo-cambio", icon: ReceiptText },
+    { label: "WhatsApp de plataforma", href: "/app-platform/whatsapp-plataforma", icon: ShieldCheck },
+  ],
+};
 
 export const AppShell: FC<AppShellProps> = ({
   activeHref,
@@ -58,11 +78,13 @@ export const AppShell: FC<AppShellProps> = ({
   userInitials,
   userRolLabel,
   onCerrarSesion,
+  esSuperadmin = false,
   children,
 }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [rail, setRail] = useState(false);
   const { tema, alternar } = useTheme();
+  const navGrupos = esSuperadmin ? [...NAV_GRUPOS, NAV_GRUPO_ADMINISTRACION] : NAV_GRUPOS;
 
   return (
     <div className="flex h-screen bg-bg overflow-hidden">
@@ -124,7 +146,7 @@ export const AppShell: FC<AppShellProps> = ({
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3 flex flex-col gap-3.5">
-          {NAV_GRUPOS.map((grupo) => (
+          {navGrupos.map((grupo) => (
             <div key={grupo.label} className="flex flex-col gap-1">
               <span
                 className={cn(
