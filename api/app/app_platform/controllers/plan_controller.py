@@ -4,7 +4,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.app_platform.dependencies import PlanServiceDep, require_system_scope
+from app.app_platform.dependencies import PlanServiceDep
+from app.auth.dependencies import require_system_scope
 from app.app_platform.exceptions import (
     ParametroComercialFaltanteError,
     ReglaDeIncluidosVioladaError,

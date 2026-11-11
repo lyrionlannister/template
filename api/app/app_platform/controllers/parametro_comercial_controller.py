@@ -5,14 +5,12 @@ from datetime import date
 
 from fastapi import APIRouter, Depends
 
-from app.app_platform.dependencies import (
-    ParametroComercialServiceDep,
-    require_system_scope,
-)
+from app.app_platform.dependencies import ParametroComercialServiceDep
 from app.app_platform.schemas.parametro_comercial_schema import (
     ParametroComercialRegistrarRequest,
     ParametroComercialRespuesta,
 )
+from app.auth.dependencies import require_system_scope
 
 router = APIRouter(
     prefix="/app-platform/parametros-comerciales",

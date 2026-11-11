@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.app_platform.services.costo_canal_service import CostoCanalService
@@ -13,24 +13,6 @@ from app.app_platform.services.plan_service import PlanService
 from app.app_platform.services.pool_incluidos_service import PoolIncluidosService
 from app.app_platform.services.tipo_cambio_service import TipoCambioService
 from app.core.database.session import get_db_session
-from app.core.database.tenant_context import is_system_scope
-
-
-def require_system_scope() -> None:
-    """Solo el administrador del sistema entra al panel de app_platform.
-
-    Hoy el alcance se fija explícito en el contexto (ver
-    `tenant_context.py`); el auth de fase 04 todavía no tiene identidad de
-    administrador del sistema (solo usuarios de tenant), así que esto sigue
-    sin estar conectado a una sesión real. Queda pendiente para cuando
-    exista esa identidad, sin cambiar esta firma.
-    """
-
-    if not is_system_scope():
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Esta acción requiere alcance de administrador del sistema.",
-        )
 
 
 def get_costo_canal_service(

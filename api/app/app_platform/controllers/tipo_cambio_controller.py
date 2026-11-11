@@ -4,7 +4,8 @@ from datetime import date
 
 from fastapi import APIRouter, Depends
 
-from app.app_platform.dependencies import TipoCambioServiceDep, require_system_scope
+from app.app_platform.dependencies import TipoCambioServiceDep
+from app.auth.dependencies import require_system_scope
 from app.app_platform.schemas.tipo_cambio_schema import (
     TipoCambioRegistrarRequest,
     TipoCambioRespuesta,

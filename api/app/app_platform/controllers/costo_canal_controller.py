@@ -5,12 +5,13 @@ from datetime import date
 
 from fastapi import APIRouter, Depends
 
-from app.app_platform.dependencies import CostoCanalServiceDep, require_system_scope
+from app.app_platform.dependencies import CostoCanalServiceDep
 from app.app_platform.enums.costo_canal_enums import CanalMensajeria, CategoriaMensaje
 from app.app_platform.schemas.costo_canal_schema import (
     CostoCanalRespuesta,
     RegistrarCostoCanalRequest,
 )
+from app.auth.dependencies import require_system_scope
 
 router = APIRouter(
     prefix="/app-platform/costos",
