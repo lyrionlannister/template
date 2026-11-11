@@ -124,6 +124,7 @@ class AuthService:
                 rol=RolUsuario.administrador,
                 mfa_habilitado=True,
                 activo=True,
+                telefono=datos.telefono,
             )
         )
         await self.session.commit()

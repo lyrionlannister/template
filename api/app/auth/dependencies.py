@@ -29,7 +29,7 @@ from app.auth.services.auth_service import AuthService
 from app.auth.services.otp_service import OtpService
 from app.auth.services.sesion_service import SesionService
 from app.core.database.session import get_db_session
-from app.core.database.tenant_context import set_current_tenant
+from app.core.database.tenant_context import allow_system_scope, set_current_tenant
 from app.core.security.cookies import ACCESS_TOKEN_COOKIE
 from app.core.security.token_service import TokenInvalidoError, TokenService
 
@@ -97,6 +97,24 @@ async def get_sesion_actual(
 
 SesionPendienteMfa = Annotated[SesionUsuario, Depends(get_sesion_pendiente_mfa)]
 SesionActual = Annotated[SesionUsuario, Depends(get_sesion_actual)]
+
+
+async def require_system_scope(
+    sesion: Annotated[SesionUsuario, Depends(get_sesion_actual)],
+) -> AsyncGenerator[None]:
+    """Única puerta de entrada al alcance de administrador del sistema:
+    exige que la sesión autenticada sea de un superadmin real, y activa
+    `allow_system_scope()` solo mientras dura esta petición -- nunca de
+    forma global, así que no hay riesgo de fuga entre tenants fuera de las
+    rutas de `app_platform`."""
+
+    if not sesion.es_superadmin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Esta acción requiere alcance de administrador del sistema.",
+        )
+    with allow_system_scope():
+        yield
 
 
 def get_auth_service(

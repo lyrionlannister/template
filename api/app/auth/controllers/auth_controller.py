@@ -57,6 +57,7 @@ async def _a_respuesta(usuario, service: AuthServiceDep) -> UsuarioRespuesta:
         rol=usuario.rol,
         mfa_habilitado=usuario.mfa_habilitado,
         tenant_nombre=tenant.nombre if tenant else "",
+        es_superadmin=usuario.es_superadmin,
     )
 
 

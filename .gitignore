@@ -13,6 +13,8 @@ prompts/
 
 node_modules/
 dist/
+*.tsbuildinfo
+infra/certs/
 graphify-out/
 component-gallery-page.tsx
 

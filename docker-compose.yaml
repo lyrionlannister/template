@@ -1,5 +1,6 @@
 services:
   database:
+    container_name: database
     build: ./infra/database
     env_file: ./infra/.env
     volumes:
@@ -8,6 +9,7 @@ services:
       - "127.0.0.1:5432:5432"
 
   valkey:
+    container_name: valkey
     build: ./infra/cache
     env_file: ./infra/.env
     command: ["sh", "-c", "valkey-server --requirepass \"$$VALKEY_PASSWORD\""]
@@ -17,6 +19,7 @@ services:
       - "127.0.0.1:6379:6379"
 
   api:
+    container_name: api
     build: ./api
     env_file: ./api/.env
     environment:
@@ -27,6 +30,25 @@ services:
       - valkey
     ports:
       - "127.0.0.1:8000:8000"
+
+  client:
+    container_name: client
+    build: ./client
+    env_file: ./client/.env
+    ports:
+      - "127.0.0.1:5173:5173"
+
+  nginx:
+    container_name: nginx
+    build: ./infra/nginx
+    volumes:
+      - ./infra/certs:/etc/nginx/certs:ro
+    depends_on:
+      - api
+      - client
+    ports:
+      - "127.0.0.1:443:443"
+      - "127.0.0.1:80:80"
 
 volumes:
   postgres_data:

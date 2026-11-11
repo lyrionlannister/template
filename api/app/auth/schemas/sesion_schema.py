@@ -26,3 +26,4 @@ class SesionUsuario(BaseSchema):
     email: str
     rol: RolUsuario
     mfa_habilitado: bool
+    es_superadmin: bool = False

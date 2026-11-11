@@ -24,6 +24,7 @@ class SesionService:
             email=usuario.email,
             rol=usuario.rol,
             mfa_habilitado=usuario.mfa_habilitado,
+            es_superadmin=usuario.es_superadmin,
         )
         await valkey_client.set(
             clave_sesion(usuario.id),

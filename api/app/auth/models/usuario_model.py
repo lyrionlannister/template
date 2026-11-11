@@ -34,3 +34,9 @@ class Usuario(Base, TenantScopedMixin, IdMixin, TimestampMixin):
     activo: Mapped[bool] = mapped_column(
         "activo", Boolean, nullable=False, default=True
     )
+    es_superadmin: Mapped[bool] = mapped_column(
+        "es_superadmin", Boolean, nullable=False, default=False
+    )
+    telefono: Mapped[str | None] = mapped_column(
+        "telefono", String(20), nullable=True
+    )

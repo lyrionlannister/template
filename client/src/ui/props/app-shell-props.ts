@@ -10,5 +10,6 @@ export interface AppShellProps {
   userInitials: string;
   userRolLabel: string;
   onCerrarSesion: () => void;
+  esSuperadmin?: boolean;
   children: ReactNode;
 }

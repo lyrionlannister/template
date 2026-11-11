@@ -38,6 +38,12 @@ from app.contacts.controllers.contacts_controller import (
 from app.core.config.settings import get_settings
 from app.core.security.origin_check_middleware import OriginCheckMiddleware
 from app.core.security.security_headers_middleware import SecurityHeadersMiddleware
+from app.messaging.controllers.messaging_controller import (
+    router as messaging_router,
+)
+from app.messaging.controllers.plantilla_otp_plataforma_controller import (
+    router as plantilla_otp_plataforma_router,
+)
 from app.templates.controllers.templates_controller import (
     router as templates_router,
 )
@@ -64,6 +70,8 @@ app.include_router(saldo_router)
 app.include_router(contacts_router)
 app.include_router(audiences_router)
 app.include_router(templates_router)
+app.include_router(messaging_router)
+app.include_router(plantilla_otp_plataforma_router)
 
 allowed_origins = get_settings().app.allowed_origins
 

@@ -14,6 +14,7 @@ class RegistroRequest(BaseSchema):
     nombre_organizacion: str
     email: EmailStr
     password: str
+    telefono: str | None = None
 
     @field_validator("password")
     @classmethod
@@ -69,3 +70,4 @@ class UsuarioRespuesta(BaseSchema):
     rol: RolUsuario
     mfa_habilitado: bool
     tenant_nombre: str
+    es_superadmin: bool

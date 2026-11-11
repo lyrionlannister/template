@@ -6,4 +6,5 @@ export interface Usuario {
   rol: RolUsuario;
   mfaHabilitado: boolean;
   tenantNombre: string;
+  esSuperadmin: boolean;
 }
