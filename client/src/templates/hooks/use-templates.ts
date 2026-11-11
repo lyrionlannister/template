@@ -29,6 +29,7 @@ export const useTemplates = () => {
       contenido: string;
       categoria?: CategoriaMensaje | null;
       nombrePlantillaMeta?: string | null;
+      nombrePlantillaSent?: string | null;
     }) =>
       apiClient<Plantilla>("/templates", {
         method: "POST",
@@ -45,6 +46,7 @@ export const useTemplates = () => {
         contenido?: string;
         categoria?: CategoriaMensaje | null;
         nombrePlantillaMeta?: string | null;
+        nombrePlantillaSent?: string | null;
       },
     ) =>
       apiClient<Plantilla>(`/templates/${publicId}`, {

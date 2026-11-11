@@ -9,6 +9,7 @@ export interface Plantilla {
   variables: string[];
   categoria: CategoriaMensaje | null;
   nombrePlantillaMeta: string | null;
+  nombrePlantillaSent: string | null;
   creadoEn: string;
 }
 

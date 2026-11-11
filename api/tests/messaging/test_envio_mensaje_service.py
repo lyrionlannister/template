@@ -64,6 +64,15 @@ class _MetaClientFalso:
         return {"messages": [{"id": "wamid.falso-1"}]}
 
 
+class _SentClientFalso:
+    def __init__(self):
+        self.enviados: list[dict] = []
+
+    async def enviar_plantilla(self, **kwargs) -> dict:
+        self.enviados.append(kwargs)
+        return {"data": {"recipients": [{"message_id": "sent-falso-1"}]}}
+
+
 async def _crear_tenant() -> int:
     async with async_session_factory() as session:
         plan = Plan(
@@ -139,7 +148,9 @@ def _crear_templates_service(session, contacts_service) -> TemplatesService:
     )
 
 
-def _crear_envio_service(session, contacts_service, templates_service, meta_falso):
+def _crear_envio_service(
+    session, contacts_service, templates_service, meta_falso, sent_falso=None
+):
     parametro_comercial_service = ParametroComercialService(session)
     plan_service = PlanService(
         session,
@@ -156,7 +167,11 @@ def _crear_envio_service(session, contacts_service, templates_service, meta_fals
         plan_service,
     )
     return conexion_service, EnvioMensajeService(
-        conexion_service, templates_service, contacts_service, meta_falso
+        conexion_service,
+        templates_service,
+        contacts_service,
+        meta_falso,
+        sent_falso or _SentClientFalso(),
     )
 
 
@@ -247,3 +262,45 @@ async def test_contacto_sin_variable_falla_legible_antes_de_llamar_a_meta():
                 )
 
     assert meta_falso.enviados == []
+
+
+async def test_sms_envia_por_sent_con_parametros_nombrados():
+    tenant_id = await _crear_tenant()
+    await _crear_contacto(tenant_id, "+573009990004", {"nombre": "Ana"})
+    meta_falso = _MetaClientFalso()
+    sent_falso = _SentClientFalso()
+
+    async with async_session_factory() as session:
+        with set_current_tenant(tenant_id):
+            contacts_service = _crear_contacts_service(session)
+            templates_service = _crear_templates_service(session, contacts_service)
+            _, envio_service = _crear_envio_service(
+                session, contacts_service, templates_service, meta_falso, sent_falso
+            )
+            plantilla = await templates_service.crear(
+                tenant_id,
+                "Recordatorio",
+                CanalMensajeria.sms,
+                "Hola {{nombre}}.",
+                None,
+                None,
+                "plantilla_aprobada_sent",
+            )
+            contacto = await contacts_service.obtener_contacto(
+                (
+                    await contacts_service.contacto_repository.obtener_por_telefono(
+                        "+573009990004"
+                    )
+                ).public_id
+            )
+            await envio_service.enviar_plantilla(
+                plantilla.public_id, contacto.public_id
+            )
+
+    assert meta_falso.enviados == []
+    assert len(sent_falso.enviados) == 1
+    enviado = sent_falso.enviados[0]
+    assert enviado["canal"] == CanalMensajeria.sms
+    assert enviado["telefono_destino"] == "+573009990004"
+    assert enviado["nombre_plantilla"] == "plantilla_aprobada_sent"
+    assert enviado["parametros"] == {"nombre": "Ana"}

@@ -1,8 +1,8 @@
 """Tabla de enrutamiento CERRADA de canal a proveedor de envío. Es la
 garantía invariante "WhatsApp nunca por Sent.dm" (`/CLAUDE.md`): no hay
 rama, configuración ni fallback que pueda llevar `whatsapp` a otro lado
-que no sea Meta. SMS y RCS (Sent.dm, fase 9) todavía no tienen proveedor
--- se rechazan explícito, nunca se enrutan a ningún sitio por defecto.
+que no sea Meta. SMS y RCS van siempre a Sent.dm (fase 9), con el token
+de plataforma -- nunca a Meta.
 
 No agregues una entrada a `_ENRUTAMIENTO` ni un valor al enum
 `ProveedorMensajeria` sin revisar primero esta garantía: cualquier cambio
@@ -15,6 +15,7 @@ from app.app_platform.enums.costo_canal_enums import CanalMensajeria
 
 class ProveedorMensajeria(enum.StrEnum):
     meta = "meta"
+    sent = "sent"
 
 
 class CanalSinProveedorError(ValueError):
@@ -23,8 +24,8 @@ class CanalSinProveedorError(ValueError):
 
 _ENRUTAMIENTO: dict[CanalMensajeria, ProveedorMensajeria | None] = {
     CanalMensajeria.whatsapp: ProveedorMensajeria.meta,
-    CanalMensajeria.sms: None,
-    CanalMensajeria.rcs: None,
+    CanalMensajeria.sms: ProveedorMensajeria.sent,
+    CanalMensajeria.rcs: ProveedorMensajeria.sent,
 }
 
 

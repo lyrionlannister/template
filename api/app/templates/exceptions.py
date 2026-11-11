@@ -20,6 +20,12 @@ class NombrePlantillaMetaRequeridoError(ValueError):
     aprobada en la cuenta de WhatsApp Business del cliente."""
 
 
+class NombrePlantillaSentRequeridoError(ValueError):
+    """Una plantilla de SMS o RCS necesita el nombre de la plantilla
+    aprobada en el dashboard de Sent.dm -- texto libre no sirve para el
+    primer contacto con alguien que nunca respondió."""
+
+
 class ContactoNoEncontradoParaRenderizarError(ValueError):
     """El contacto indicado para el renderizado de prueba no existe o no
     pertenece a este tenant."""

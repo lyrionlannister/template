@@ -20,6 +20,7 @@ from app.templates.exceptions import (
     CategoriaRequeridaError,
     ContactoNoEncontradoParaRenderizarError,
     NombrePlantillaMetaRequeridoError,
+    NombrePlantillaSentRequeridoError,
     PlantillaNoEncontradaError,
     VariableFaltanteEnRenderizadoError,
     VariableNoPermitidaError,
@@ -30,6 +31,7 @@ from app.templates.repositories.plantilla_repository import PlantillaRepository
 _PATRON_VARIABLE = re.compile(r"\{\{([a-zA-Z0-9_]+)\}\}")
 CAMPO_BASE_PLANTILLA = "telefono"
 _CATEGORIAS_PERMITIDAS_WHATSAPP = {CategoriaMensaje.marketing, CategoriaMensaje.utility}
+_CANALES_SENT = {CanalMensajeria.sms, CanalMensajeria.rcs}
 
 
 class TemplatesService:
@@ -84,6 +86,19 @@ class TemplatesService:
             )
         return categoria, nombre_plantilla_meta
 
+    @staticmethod
+    def _validar_sent(
+        canal: CanalMensajeria, nombre_plantilla_sent: str | None
+    ) -> str | None:
+        if canal not in _CANALES_SENT:
+            return None
+        if not nombre_plantilla_sent:
+            raise NombrePlantillaSentRequeridoError(
+                "Una plantilla de SMS o RCS necesita el nombre de la plantilla "
+                "aprobada en el dashboard de Sent.dm."
+            )
+        return nombre_plantilla_sent
+
     async def crear(
         self,
         tenant_id: int,
@@ -92,12 +107,14 @@ class TemplatesService:
         contenido: str,
         categoria: CategoriaMensaje | None,
         nombre_plantilla_meta: str | None,
+        nombre_plantilla_sent: str | None = None,
     ) -> Plantilla:
         variables = self._extraer_variables(contenido)
         await self._validar_variables(variables)
         categoria, nombre_plantilla_meta = self._validar_whatsapp(
             canal, categoria, nombre_plantilla_meta
         )
+        nombre_plantilla_sent = self._validar_sent(canal, nombre_plantilla_sent)
         plantilla = Plantilla(
             tenant_id=tenant_id,
             nombre=nombre,
@@ -106,6 +123,7 @@ class TemplatesService:
             variables=variables,
             categoria=categoria,
             nombre_plantilla_meta=nombre_plantilla_meta,
+            nombre_plantilla_sent=nombre_plantilla_sent,
         )
         plantilla = await self.plantilla_repository.add(plantilla)
         await self.session.commit()
@@ -133,6 +151,7 @@ class TemplatesService:
         contenido: str | None,
         categoria: CategoriaMensaje | None,
         nombre_plantilla_meta: str | None,
+        nombre_plantilla_sent: str | None = None,
     ) -> Plantilla:
         plantilla = await self.obtener(public_id)
         if contenido is not None:
@@ -156,6 +175,15 @@ class TemplatesService:
             )
             plantilla.categoria = nueva_categoria
             plantilla.nombre_plantilla_meta = nuevo_nombre_meta
+        elif plantilla.canal in _CANALES_SENT:
+            nuevo_nombre_sent = (
+                nombre_plantilla_sent
+                if nombre_plantilla_sent is not None
+                else plantilla.nombre_plantilla_sent
+            )
+            plantilla.nombre_plantilla_sent = self._validar_sent(
+                plantilla.canal, nuevo_nombre_sent
+            )
         plantilla = await self.plantilla_repository.update(plantilla)
         await self.session.commit()
         return plantilla

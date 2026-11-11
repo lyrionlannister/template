@@ -14,6 +14,7 @@ from app.contacts.dependencies import get_contacts_service
 from app.contacts.services.contacts_service import ContactsService
 from app.core.database.session import get_db_session
 from app.messaging.clients.meta_client import MetaClient
+from app.messaging.clients.sent_client import SentClient
 from app.messaging.repositories.conexion_whatsapp_repository import (
     ConexionWhatsappRepository,
 )
@@ -35,6 +36,17 @@ async def get_meta_client() -> AsyncGenerator[MetaClient]:
 
 
 MetaClientDep = Annotated[MetaClient, Depends(get_meta_client)]
+
+
+async def get_sent_client() -> AsyncGenerator[SentClient]:
+    cliente = SentClient()
+    try:
+        yield cliente
+    finally:
+        await cliente.cerrar()
+
+
+SentClientDep = Annotated[SentClient, Depends(get_sent_client)]
 
 
 def get_conexion_whatsapp_service(
@@ -62,9 +74,10 @@ def get_envio_mensaje_service(
     templates_service: Annotated[TemplatesService, Depends(get_templates_service)],
     contacts_service: Annotated[ContactsService, Depends(get_contacts_service)],
     meta_client: MetaClientDep,
+    sent_client: SentClientDep,
 ) -> EnvioMensajeService:
     return EnvioMensajeService(
-        conexion_service, templates_service, contacts_service, meta_client
+        conexion_service, templates_service, contacts_service, meta_client, sent_client
     )
 
 

@@ -7,7 +7,6 @@ import pytest
 from app.app_platform.enums.costo_canal_enums import CanalMensajeria
 from app.messaging.services.dispatcher_service import (
     _ENRUTAMIENTO,
-    CanalSinProveedorError,
     ProveedorMensajeria,
     proveedor_de,
 )
@@ -18,16 +17,13 @@ def test_whatsapp_enruta_a_meta():
 
 
 @pytest.mark.parametrize("canal", [CanalMensajeria.sms, CanalMensajeria.rcs])
-def test_sms_y_rcs_no_tienen_proveedor_todavia(canal):
-    with pytest.raises(CanalSinProveedorError):
-        proveedor_de(canal)
+def test_sms_y_rcs_enrutan_a_sent(canal):
+    assert proveedor_de(canal) == ProveedorMensajeria.sent
 
 
-def test_ningun_canal_enruta_a_sent():
-    """Ni siquiera estructuralmente: "sent" no es un valor posible del
-    enum `ProveedorMensajeria`, así que ningún valor de la tabla puede
-    apuntar ahí. Si alguien agrega esa opción y la enruta, este test lo
-    detecta."""
-    valores_enrutados = {p.value for p in _ENRUTAMIENTO.values() if p is not None}
-    assert "sent" not in valores_enrutados
-    assert valores_enrutados == {"meta"}
+def test_whatsapp_nunca_enruta_a_sent():
+    """Estructural, no solo de comportamiento: si alguien cambia la entrada
+    de `whatsapp` en `_ENRUTAMIENTO` a `sent`, este test lo detecta sin
+    necesitar que nadie primero intente enviar un mensaje."""
+    assert _ENRUTAMIENTO[CanalMensajeria.whatsapp] is ProveedorMensajeria.meta
+    assert _ENRUTAMIENTO[CanalMensajeria.whatsapp] is not ProveedorMensajeria.sent

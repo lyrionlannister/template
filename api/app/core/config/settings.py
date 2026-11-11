@@ -102,6 +102,11 @@ class MessagingSettings(_ConfigBase):
     meta_access_token: SecretStr
     meta_platform_phone_number_id: str
     meta_platform_waba_id: str
+    # SMS/RCS, token único de plataforma (api/CLAUDE.md "Canales y
+    # proveedores") -- el tenant nunca aporta sus propias credenciales de
+    # Sent.dm, a diferencia de WhatsApp.
+    sentdm_api_key: SecretStr
+    sentdm_base_url: str = "https://api.sent.dm"
 
 
 class Settings:

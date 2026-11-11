@@ -12,3 +12,8 @@ class VariableFaltanteParaEnvioError(ValueError):
 
 class PlantillaOtpPlataformaNoEncontradaError(ValueError):
     """La plantilla de autenticación de WhatsApp de plataforma no existe."""
+
+
+class CanalNoPermitidoEnSentError(ValueError):
+    """El cliente de Sent.dm solo envía sms o rcs -- nunca whatsapp. Ver
+    "Garantía: WhatsApp nunca por Sent.dm" en api/CLAUDE.md."""

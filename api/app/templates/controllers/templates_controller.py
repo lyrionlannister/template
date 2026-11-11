@@ -12,6 +12,7 @@ from app.templates.exceptions import (
     CategoriaRequeridaError,
     ContactoNoEncontradoParaRenderizarError,
     NombrePlantillaMetaRequeridoError,
+    NombrePlantillaSentRequeridoError,
     PlantillaNoEncontradaError,
     VariableFaltanteEnRenderizadoError,
     VariableNoPermitidaError,
@@ -62,10 +63,15 @@ async def crear(
             body.contenido,
             body.categoria,
             body.nombre_plantilla_meta,
+            body.nombre_plantilla_sent,
         )
     except VariableNoPermitidaError as error:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(error)) from error
-    except (CategoriaRequeridaError, NombrePlantillaMetaRequeridoError) as error:
+    except (
+        CategoriaRequeridaError,
+        NombrePlantillaMetaRequeridoError,
+        NombrePlantillaSentRequeridoError,
+    ) as error:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)
         ) from error
@@ -97,12 +103,17 @@ async def actualizar(
             body.contenido,
             body.categoria,
             body.nombre_plantilla_meta,
+            body.nombre_plantilla_sent,
         )
     except PlantillaNoEncontradaError as error:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(error)) from error
     except VariableNoPermitidaError as error:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(error)) from error
-    except (CategoriaRequeridaError, NombrePlantillaMetaRequeridoError) as error:
+    except (
+        CategoriaRequeridaError,
+        NombrePlantillaMetaRequeridoError,
+        NombrePlantillaSentRequeridoError,
+    ) as error:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)
         ) from error
