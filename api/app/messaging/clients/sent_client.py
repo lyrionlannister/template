@@ -1,14 +1,14 @@
-"""Cliente de Sent.dm (API v3). Mismo patrón que `meta_client.py`: cliente
-httpx reusable, sin reintentos, `raise_for_status`, secretos leídos frescos
-de `get_settings()` en cada llamada.
+"""Cliente de Sent.dm. Usa el SDK oficial `sentdm` (import `sent_dm`,
+`AsyncSent`), no httpx crudo -- a diferencia de `meta_client.py`, que sí usa
+httpx crudo porque Meta no publica SDK oficial de WhatsApp Cloud API.
 
-Contrato verificado contra docs.sent.dm el 2026-11-11:
+Contrato verificado contra docs.sent.dm y github.com/sentdm/sent-dm-python
+el 2026-11-11:
 
-- `POST /v3/messages`, header `x-api-key`, body con `to` (lista),
-  `channel` (lista) y exactamente uno de `template` (`id`/`name` +
-  `parameters`, objeto nombrado) o `text` (texto libre). Texto libre no
-  sirve para el primer contacto con alguien que nunca respondió -- Pulso
-  siempre usa `template`.
+- `client.messages.send(to=[...], channel=[...], template={"name", "parameters"})`.
+  `template` acepta `id`/`name` + `parameters` (objeto nombrado) o, en su
+  lugar, `text` libre. Texto libre no sirve para el primer contacto con
+  alguien que nunca respondió -- Pulso siempre usa `template`.
 - Canal explícito por petición, nunca una lista construida por el llamador:
   este cliente solo acepta `sms` o `rcs`. Si recibe `whatsapp`, falla antes
   de construir la petición -- ver "Garantía: WhatsApp nunca por Sent.dm" en
@@ -17,7 +17,7 @@ Contrato verificado contra docs.sent.dm el 2026-11-11:
 
 from typing import Any
 
-import httpx
+from sent_dm import AsyncSent
 
 from app.app_platform.enums.costo_canal_enums import CanalMensajeria
 from app.core.config.settings import get_settings
@@ -27,15 +27,15 @@ _CANALES_PERMITIDOS = {CanalMensajeria.sms, CanalMensajeria.rcs}
 
 
 class SentClient:
-    def __init__(self, cliente_http: httpx.AsyncClient | None = None):
-        self._cliente_propio = cliente_http is None
-        self._http = cliente_http or httpx.AsyncClient(
-            base_url=get_settings().messaging.sentdm_base_url, timeout=15.0
+    def __init__(self, cliente: AsyncSent | None = None):
+        settings = get_settings().messaging
+        self._client = cliente or AsyncSent(
+            api_key=settings.sentdm_api_key.get_secret_value(),
+            base_url=settings.sentdm_base_url,
         )
 
     async def cerrar(self) -> None:
-        if self._cliente_propio:
-            await self._http.aclose()
+        await self._client.close()
 
     async def enviar_plantilla(
         self,
@@ -50,16 +50,9 @@ class SentClient:
                 f"Sent.dm no envía el canal {canal.value}. Permitidos: "
                 f"{', '.join(c.value for c in _CANALES_PERMITIDOS)}."
             )
-        settings = get_settings().messaging
-        cuerpo = {
-            "to": [telefono_destino],
-            "channel": [canal.value],
-            "template": {"name": nombre_plantilla, "parameters": parametros},
-        }
-        respuesta = await self._http.post(
-            "/v3/messages",
-            json=cuerpo,
-            headers={"x-api-key": settings.sentdm_api_key.get_secret_value()},
+        respuesta = await self._client.messages.send(
+            to=[telefono_destino],
+            channel=[canal.value],
+            template={"name": nombre_plantilla, "parameters": parametros},
         )
-        respuesta.raise_for_status()
-        return respuesta.json()
+        return respuesta.model_dump()
