@@ -284,7 +284,7 @@ export const SuscripcionPage: FC = () => {
           )}
         </div>
       ) : (
-        <div className="bg-surface border border-border rounded-md p-4.75 max-w-2xl">
+        <div className="bg-surface border border-border rounded-md p-4.75 max-w-2xl lg:max-w-4xl">
           <h3 className="text-[15px] font-semibold mb-1 flex items-center gap-2">
             <CreditCard className="size-4.5 text-brand" aria-hidden />
             {cambiandoTarjeta ? "Cambiar tarjeta" : "Conectar tarjeta para la suscripción"}
@@ -314,7 +314,7 @@ export const SuscripcionPage: FC = () => {
             </div>
           ) : (
             <form onSubmit={conectar}>
-              <div className="grid grid-cols-1 lg:grid-cols-[296px_1fr] gap-5 lg:gap-6 items-center mb-4.5">
+              <div className="grid grid-cols-1 lg:grid-cols-[296px_1fr_260px] gap-5 lg:gap-6 items-start mb-4.5">
                 <TarjetaVisual
                   marca={detectarMarcaTarjeta(numero)}
                   numero={numero}
@@ -381,9 +381,7 @@ export const SuscripcionPage: FC = () => {
                     />
                   </Field>
                 </div>
-              </div>
 
-              <div className="mb-4.5 md:max-w-sm">
                 <SecureStrip />
               </div>
 
