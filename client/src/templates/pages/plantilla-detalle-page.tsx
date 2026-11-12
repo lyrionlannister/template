@@ -256,6 +256,11 @@ export const PlantillaDetallePage: FC = () => {
                   Plantilla aprobada en Meta: <span className="font-mono">{plantilla.nombrePlantillaMeta}</span>
                 </p>
               )}
+              {plantilla.nombrePlantillaSent && (
+                <p className="text-ink-3 text-xs mt-1">
+                  Plantilla aprobada en Sent.dm: <span className="font-mono">{plantilla.nombrePlantillaSent}</span>
+                </p>
+              )}
             </div>
           )}
 

@@ -44,6 +44,7 @@ export const NuevaPlantillaPage: FC = () => {
   const [contenido, setContenido] = useState("");
   const [categoria, setCategoria] = useState<CategoriaMensaje>("utility");
   const [nombrePlantillaMeta, setNombrePlantillaMeta] = useState("");
+  const [nombrePlantillaSent, setNombrePlantillaSent] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -87,8 +88,13 @@ export const NuevaPlantillaPage: FC = () => {
 
   const variables = extraerVariables(contenido);
   const esWhatsapp = canal === "whatsapp";
+  const esSent = canal === "sms" || canal === "rcs";
   const puedeGuardar =
-    nombre.trim() !== "" && contenido.trim() !== "" && (!esWhatsapp || nombrePlantillaMeta.trim() !== "") && !guardando;
+    nombre.trim() !== "" &&
+    contenido.trim() !== "" &&
+    (!esWhatsapp || nombrePlantillaMeta.trim() !== "") &&
+    (!esSent || nombrePlantillaSent.trim() !== "") &&
+    !guardando;
 
   const guardar = async () => {
     setError(null);
@@ -100,6 +106,7 @@ export const NuevaPlantillaPage: FC = () => {
         contenido,
         categoria: esWhatsapp ? categoria : null,
         nombrePlantillaMeta: esWhatsapp ? nombrePlantillaMeta.trim() : null,
+        nombrePlantillaSent: esSent ? nombrePlantillaSent.trim() : null,
       });
       navigate(`/plantillas/${plantilla.publicId}`);
     } catch (err) {
@@ -171,6 +178,14 @@ export const NuevaPlantillaPage: FC = () => {
             </Field>
             <Field label="Nombre de la plantilla en Meta" htmlFor="tpl-meta" hint="Referencia a la plantilla aprobada en la cuenta de WhatsApp Business del cliente.">
               <Input id="tpl-meta" value={nombrePlantillaMeta} onChange={(event) => setNombrePlantillaMeta(event.target.value)} />
+            </Field>
+          </div>
+        )}
+
+        {esSent && (
+          <div className="mb-4.5">
+            <Field label="Nombre de la plantilla en Sent.dm" htmlFor="tpl-sent" hint="Referencia a la plantilla aprobada en el dashboard de Sent.dm. Texto libre no sirve para el primer contacto con alguien que nunca respondió.">
+              <Input id="tpl-sent" value={nombrePlantillaSent} onChange={(event) => setNombrePlantillaSent(event.target.value)} />
             </Field>
           </div>
         )}

@@ -15,6 +15,7 @@ class PlantillaCrearRequest(BaseSchema):
     contenido: str = Field(min_length=1)
     categoria: CategoriaMensaje | None = None
     nombre_plantilla_meta: str | None = Field(default=None, max_length=512)
+    nombre_plantilla_sent: str | None = Field(default=None, max_length=512)
 
 
 class PlantillaActualizarRequest(BaseSchema):
@@ -24,6 +25,7 @@ class PlantillaActualizarRequest(BaseSchema):
     contenido: str | None = Field(default=None, min_length=1)
     categoria: CategoriaMensaje | None = None
     nombre_plantilla_meta: str | None = Field(default=None, max_length=512)
+    nombre_plantilla_sent: str | None = Field(default=None, max_length=512)
 
 
 class PlantillaRespuesta(BaseSchema):
@@ -34,6 +36,7 @@ class PlantillaRespuesta(BaseSchema):
     variables: list[str]
     categoria: CategoriaMensaje | None
     nombre_plantilla_meta: str | None
+    nombre_plantilla_sent: str | None
     creado_en: datetime
 
 

@@ -42,6 +42,7 @@ from app.core.database.tenant_context import set_current_tenant
 from app.templates.exceptions import (
     CategoriaRequeridaError,
     NombrePlantillaMetaRequeridoError,
+    NombrePlantillaSentRequeridoError,
     VariableFaltanteEnRenderizadoError,
     VariableNoPermitidaError,
 )
@@ -129,6 +130,7 @@ async def test_crear_extrae_variables_del_contenido_y_las_valida() -> None:
                 "Hola {{telefono}}, tu saldo es {{saldo}}.",
                 None,
                 None,
+                "plantilla_aprobada_sent",
             )
     assert plantilla.variables == ["telefono", "saldo"]
 
@@ -202,6 +204,39 @@ async def test_whatsapp_con_categoria_y_nombre_meta_se_crea() -> None:
     assert plantilla.nombre_plantilla_meta == "plantilla_aprobada_meta"
 
 
+@pytest.mark.parametrize("canal", [CanalMensajeria.sms, CanalMensajeria.rcs])
+async def test_sms_rcs_sin_nombre_plantilla_sent_se_rechaza(canal) -> None:
+    tenant_id = await _crear_tenant()
+
+    async with async_session_factory() as session:
+        with set_current_tenant(tenant_id):
+            servicio = _crear_templates_service(session)
+            with pytest.raises(NombrePlantillaSentRequeridoError):
+                await servicio.crear(
+                    tenant_id, "Sin plantilla sent", canal, "Hola.", None, None
+                )
+
+
+@pytest.mark.parametrize("canal", [CanalMensajeria.sms, CanalMensajeria.rcs])
+async def test_sms_rcs_con_nombre_plantilla_sent_se_crea(canal) -> None:
+    tenant_id = await _crear_tenant()
+
+    async with async_session_factory() as session:
+        with set_current_tenant(tenant_id):
+            servicio = _crear_templates_service(session)
+            plantilla = await servicio.crear(
+                tenant_id,
+                "Con plantilla sent",
+                canal,
+                "Hola.",
+                None,
+                None,
+                "plantilla_aprobada_sent",
+            )
+    assert plantilla.nombre_plantilla_sent == "plantilla_aprobada_sent"
+    assert plantilla.categoria is None
+
+
 async def test_actualizar_no_acepta_cambiar_canal_porque_el_metodo_no_lo_recibe() -> (
     None
 ):
@@ -236,6 +271,7 @@ async def test_renderizar_sustituye_variables_del_contacto_real() -> None:
                 "Hola {{nombre}}, tu telefono es {{telefono}}.",
                 None,
                 None,
+                "plantilla_aprobada_sent",
             )
             texto = await servicio.renderizar(plantilla.public_id, contacto.public_id)
     assert texto == "Hola Ana, tu telefono es +573001112202."
@@ -262,6 +298,7 @@ async def test_renderizar_falla_legible_si_el_contacto_no_trae_la_variable() -> 
                 "Hola {{nombre}}.",
                 None,
                 None,
+                "plantilla_aprobada_sent",
             )
             with pytest.raises(VariableFaltanteEnRenderizadoError):
                 await servicio.renderizar(plantilla.public_id, sin_nombre.public_id)
@@ -284,6 +321,7 @@ async def test_verificar_audiencia_reporta_contactos_con_variable_faltante() -> 
                 "Hola {{nombre}}.",
                 None,
                 None,
+                "plantilla_aprobada_sent",
             )
             audiencias_service = servicio.audiencias_service
             filtro = FiltroAudiencia(
@@ -308,7 +346,13 @@ async def test_plantilla_de_un_tenant_no_es_alcanzable_desde_otro() -> None:
         with set_current_tenant(tenant_a):
             servicio = _crear_templates_service(session)
             plantilla = await servicio.crear(
-                tenant_a, "De A", CanalMensajeria.sms, "Hola.", None, None
+                tenant_a,
+                "De A",
+                CanalMensajeria.sms,
+                "Hola.",
+                None,
+                None,
+                "plantilla_aprobada_sent",
             )
 
     from app.templates.exceptions import PlantillaNoEncontradaError

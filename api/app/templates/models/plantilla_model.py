@@ -6,7 +6,12 @@ fuente de verdad, ver `SPEC-plantillas.md`.
 `categoria`/`nombre_plantilla_meta` solo aplican a WhatsApp: sin ellas no
 se puede enviar por Meta Cloud API (la categoría decide precio y consumo
 del pool de incluidos) ni referenciar la plantilla aprobada en la cuenta
-del cliente. SMS/RCS los dejan en `None`."""
+del cliente. SMS/RCS los dejan en `None`.
+
+`nombre_plantilla_sent` solo aplica a SMS/RCS: referencia a la plantilla
+creada y aprobada en el dashboard de Sent.dm (fase 9) -- Sent exige una
+plantilla para el primer contacto con alguien que nunca respondió, el
+texto libre no sirve para eso. WhatsApp la deja en `None`."""
 
 from sqlalchemy import Enum, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
@@ -34,4 +39,7 @@ class Plantilla(Base, IdMixin, TenantScopedMixin, TimestampMixin):
     )
     nombre_plantilla_meta: Mapped[str | None] = mapped_column(
         "nombre_plantilla_meta", String(512), nullable=True
+    )
+    nombre_plantilla_sent: Mapped[str | None] = mapped_column(
+        "nombre_plantilla_sent", String(512), nullable=True
     )

@@ -98,7 +98,12 @@ async def test_crear_plantilla_y_el_canal_no_cambia_con_patch(
 
         respuesta_crear = await cliente.post(
             "/templates",
-            json={"nombre": "Saludo", "canal": "sms", "contenido": "Hola."},
+            json={
+                "nombre": "Saludo",
+                "canal": "sms",
+                "contenido": "Hola.",
+                "nombrePlantillaSent": "plantilla_aprobada_sent",
+            },
         )
         assert respuesta_crear.status_code == 201
         cuerpo = respuesta_crear.json()

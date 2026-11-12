@@ -20,6 +20,7 @@ dependencies = [
     "pyjwt>=2.9.0",
     "redis>=5.0.0",
     "requests>=2.32.0",
+    "sentdm>=0.54.0",
     "sqlalchemy[postgresql-asyncpg]>=2.1.8",
     "uvicorn[standard]>=0.54.0",
 ]
